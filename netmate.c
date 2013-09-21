@@ -2,13 +2,16 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
-#include <arpa/inet.h>
-#include <netinet/if_ether.h>
 #include <pcap.h>
 #include <gtk/gtk.h>
 
+#ifndef WIN32
+  #include <arpa/inet.h>
+  #include <netinet/if_ether.h>
+#endif
+
 // THE VERSION OF NETMATE
-#define VERSION "0.04"
+#define VERSION "0.05"
 
 // size of ethernet header (in pcap format - NOT ethernet frame!)
 #define SIZE_ETHERNET 14
@@ -180,6 +183,8 @@ void display_packet(GtkWidget *widget, gpointer data) {
   char ip_flags;			// ip header flags
   short ip_offset;			// ip fragment offset
 
+  if (filename == NULL) return;
+
   // open pcap to find packet
   handler = pcap_open_offline(filename, errbuf);
   if (handler == NULL) return;
@@ -219,7 +224,7 @@ void display_packet(GtkWidget *widget, gpointer data) {
   ip_ecn = ip->ip_tos & 0x03;
 //  sprintf(label, "ECN (0x%02x)", ip_ecn);
   sprintf(label, "<span size='7000'>ECN (0x%02x)</span>", ip_ecn);
-  GtkLabel *test = gtk_label_new(NULL);
+  GtkWidget *test = gtk_label_new(NULL);
   gtk_label_set_markup(GTK_LABEL(test), label);
   gtk_button_set_label(ecnbutton, NULL);
 
@@ -252,11 +257,11 @@ void display_packet(GtkWidget *widget, gpointer data) {
   gtk_button_set_label(protocolbutton, label);
 
   // read and set ip source address
-  sprintf(label, "Source IP Address (0x%08x = %s)", (ip->ip_src).s_addr, inet_ntoa(ip->ip_src));
+  sprintf(label, "Source IP Address (0x%08x = %s)", (unsigned int)(ip->ip_src).s_addr, inet_ntoa(ip->ip_src));
   gtk_button_set_label(sourceipaddressbutton, label);
 
   // read and set ip destination address
-  sprintf(label, "Destination IP Address (0x%08x = %s)", (ip->ip_dst).s_addr, inet_ntoa(ip->ip_dst));
+  sprintf(label, "Destination IP Address (0x%08x = %s)", (unsigned int)(ip->ip_dst).s_addr, inet_ntoa(ip->ip_dst));
   gtk_button_set_label(destinationipaddressbutton, label);
 
   // read and set ip header checksum
@@ -351,16 +356,16 @@ int main (int argc, char *argv[]) {
   char *title;				// title of the program (main window)
 
   // init GTK with console parameters (change to getopts later)
-  gtk_init(&argc, &argv);
+  gtk_init(NULL, NULL);
 
   // load UI descriptions from file
   builder = gtk_builder_new ();
-  gtk_builder_add_from_file (builder, "netmate.ui", NULL);
+  gtk_builder_add_from_file(builder, "netmate.ui", NULL);
   // for fileless compiling (gtk_builder_add_from_string)
 
   // init main window
   mainwindow = GTK_WINDOW(gtk_builder_get_object (builder, "mainwindow"));
-  g_signal_connect (mainwindow, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+  g_signal_connect(mainwindow, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
   // init packet list store (database)
   packetliststore = GTK_LIST_STORE(gtk_builder_get_object (builder, "packetliststore"));
@@ -398,6 +403,8 @@ int main (int argc, char *argv[]) {
   gtk_window_set_title(mainwindow, title);
   free(title);
 
+  while (gtk_events_pending ()) gtk_main_iteration ();
+
   // try loading filename from parameters
   if (argv[1] != NULL) {
     filename = argv[1];
@@ -408,5 +415,5 @@ int main (int argc, char *argv[]) {
   gtk_main();
 
   // exit
-  return 0;
+  return(0);
 }
