@@ -7,7 +7,7 @@
 #include <gtk/gtk.h>
 
 // THE VERSION OF NETMATE
-#define VERSION "0.01"
+#define VERSION "0.02"
 
 #define SIZE_ETHERNET 14
 
@@ -25,6 +25,10 @@ GtkButton *protocolbutton;
 GtkButton *headerchecksumbutton;
 GtkButton *sourceipaddressbutton;
 GtkButton *destinationipaddressbutton;
+GtkListStore *packetliststore;
+GtkTreeView *packettreeview;
+
+char *fname;
 
 struct sniff_ip {
   u_char ip_vhl;
@@ -153,6 +157,18 @@ gint show_question(GtkWidget *widget, gpointer message) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void display_packet(GtkWidget *widget, gpointer data) {
+  GtkTreeSelection *selection;
+  GtkTreeModel     *model;
+  GtkTreeIter       iter;
+
+  unsigned int packetnumber;
+
+  // get currently selected packet
+  selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(widget));
+  if (gtk_tree_selection_get_selected(selection, &model, &iter)) {
+    gtk_tree_model_get(model, &iter, 0, &packetnumber, -1);
+  }
+
    //The header that pcap gives us
   struct pcap_pkthdr *header;
 
@@ -169,7 +185,15 @@ void display_packet(GtkWidget *widget, gpointer data) {
 
   char *label;
 
-  if (pcap_next_ex(handler, &header, &packet) >= 0) {
+  int i = 0;
+
+  char errbuf[PCAP_ERRBUF_SIZE];
+
+  // reopen for clicking
+  handler = pcap_open_offline(fname, errbuf);
+
+  while (i++ <= packetnumber) pcap_next_ex(handler, &header, &packet);
+
     label = malloc(100);
 
     ip = (struct sniff_ip*)(packet + SIZE_ETHERNET);
@@ -221,16 +245,14 @@ void display_packet(GtkWidget *widget, gpointer data) {
 
     free(label);
 
-  } else {
-    show_information(widget, "No more packet in file...");
-  }
+  pcap_close(handler);
+
 }
 
 /// MAIN FUNCTION ///
 int main (int argc, char *argv[]) {
   GtkBuilder *builder;			// the GUI builder object
   GtkWindow *mainwindow;		// main window object
-  GtkButton *readpacketbutton;
 
   char *title;
 
@@ -244,7 +266,12 @@ int main (int argc, char *argv[]) {
 
   // read objects needed to be passed as signal parameters
   mainwindow = GTK_WINDOW(gtk_builder_get_object (builder, "mainwindow"));
-  readpacketbutton = GTK_BUTTON(gtk_builder_get_object (builder, "readpacketbutton"));
+  g_signal_connect (mainwindow, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+
+  packetliststore = GTK_LIST_STORE(gtk_builder_get_object (builder, "packetliststore"));
+
+  packettreeview = GTK_TREE_VIEW(gtk_builder_get_object (builder, "packettreeview"));
+  g_signal_connect (packettreeview, "cursor-changed", G_CALLBACK(display_packet), NULL);
 
   versionbutton = GTK_BUTTON(gtk_builder_get_object (builder, "versionbutton"));
   ihlbutton = GTK_BUTTON(gtk_builder_get_object (builder, "ihlbutton"));
@@ -267,20 +294,34 @@ int main (int argc, char *argv[]) {
   gtk_window_set_title(mainwindow, title);
   free(title);
 
-  // connect close signal
-  g_signal_connect (mainwindow, "destroy", G_CALLBACK(gtk_main_quit), NULL);
-  g_signal_connect (readpacketbutton, "clicked", G_CALLBACK(display_packet), NULL);
-
   if (argv[1] == NULL) {
     show_error(GTK_WIDGET(mainwindow), "No filename given.");
     return(0);
   }
 
+  fname = argv[1];
+
   //error buffer
-  char errbuff[PCAP_ERRBUF_SIZE];
+  char errbuf[PCAP_ERRBUF_SIZE];
 
   //open file and create pcap handler
-  handler = pcap_open_offline(argv[1], errbuff);
+  handler = pcap_open_offline(fname, errbuf);
+
+   //The header that pcap gives us
+  struct pcap_pkthdr *header;
+
+  //The actual packet
+  const u_char *packet;
+
+  GtkTreeIter iter;             // iterator
+
+  unsigned int i = 0;
+  while (pcap_next_ex(handler, &header, &packet) >= 0) {
+    // insert new row into friendlist
+    gtk_list_store_insert_with_values(packetliststore, &iter, -1, 0,  i++, -1);
+  }
+
+  pcap_close(handler);
 
   // ENTER MAIN LOOP
   gtk_main();

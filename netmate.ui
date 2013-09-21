@@ -12,11 +12,35 @@
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="GtkButton" id="readpacketbutton">
-            <property name="label" translatable="yes">read next packet placeholder :D</property>
+          <object class="GtkScrolledWindow" id="packetscrolledwindow">
+            <property name="height_request">200</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
+            <property name="shadow_type">in</property>
+            <child>
+              <object class="GtkTreeView" id="packettreeview">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="model">packetliststore</property>
+                <property name="headers_clickable">False</property>
+                <property name="enable_search">False</property>
+                <property name="search_column">0</property>
+                <child internal-child="selection">
+                  <object class="GtkTreeSelection" id="treeview-selection"/>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="packetnumbertreeviewcolumn">
+                    <property name="title" translatable="yes">Packet Number</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="packetnumbercellrenderertext"/>
+                      <attributes>
+                        <attribute name="text">0</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -726,5 +750,11 @@
         </child>
       </object>
     </child>
+  </object>
+  <object class="GtkListStore" id="packetliststore">
+    <columns>
+      <!-- column-name packetnumber -->
+      <column type="guint"/>
+    </columns>
   </object>
 </interface>
