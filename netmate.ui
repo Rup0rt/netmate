@@ -1,15 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <!-- interface-requires gtk+ 3.0 -->
-  <object class="GtkListStore" id="packetliststore">
-    <columns>
-      <!-- column-name packetnumber -->
-      <column type="guint"/>
-    </columns>
-  </object>
   <object class="GtkWindow" id="mainwindow">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
+    <property name="title" translatable="yes">NetMate</property>
     <property name="window_position">center</property>
     <property name="type_hint">toolbar</property>
     <child>
@@ -32,7 +27,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkImageMenuItem" id="imagemenuitem2">
+                      <object class="GtkImageMenuItem" id="openimagemenuitem">
                         <property name="label">gtk-open</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
@@ -805,5 +800,11 @@
         </child>
       </object>
     </child>
+  </object>
+  <object class="GtkListStore" id="packetliststore">
+    <columns>
+      <!-- column-name packetnumber -->
+      <column type="guint"/>
+    </columns>
   </object>
 </interface>
