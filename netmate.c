@@ -217,8 +217,13 @@ void display_packet(GtkWidget *widget, gpointer data) {
 
   // read and set ip ecn field
   ip_ecn = ip->ip_tos & 0x03;
-  sprintf(label, "ECN (0x%02x)", ip_ecn);
-  gtk_button_set_label(ecnbutton, label);
+//  sprintf(label, "ECN (0x%02x)", ip_ecn);
+  sprintf(label, "<span size='7000'>ECN (0x%02x)</span>", ip_ecn);
+  GtkLabel *test = gtk_label_new(NULL);
+  gtk_label_set_markup(GTK_LABEL(test), label);
+  gtk_button_set_label(ecnbutton, NULL);
+
+  gtk_button_set_image(ecnbutton, test);
 
   // read and set total length of ip header
   sprintf(label, "Total Length (%u)", htons(ip->ip_len));
