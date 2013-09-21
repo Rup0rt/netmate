@@ -205,9 +205,9 @@ void display_packet(GtkWidget *widget, gpointer data) {
   sprintf(label, "Version (%u)", ip_version);
   gtk_button_set_label(versionbutton, label);
 
-  // read and set ip header length
-  ip_headerlength = ip->ip_vhl << 2;
-  sprintf(label, "IHL (%u)", ip_headerlength);
+  // read and set ip header length (<< 2 to calculate real size)
+  ip_headerlength = ip->ip_vhl & 0x0f;
+  sprintf(label, "IHL (0x%02x)", ip_headerlength);
   gtk_button_set_label(ihlbutton, label);
 
   // read and set ip dscp field
@@ -233,9 +233,9 @@ void display_packet(GtkWidget *widget, gpointer data) {
   sprintf(label, "Flags (0x%02x)", ip_flags);
   gtk_button_set_label(flagsbutton, label);
 
-  // read and set ip fragmentation offset
-  ip_offset = (htons(ip->ip_off) & 0x1fff) << 3;
-  sprintf(label, "Fragment Offset (%u)", ip_offset);
+  // read and set ip fragmentation offset (<< 3 to calculate real size);
+  ip_offset = (htons(ip->ip_off) & 0x1fff);
+  sprintf(label, "Fragment Offset (0x%04x)", ip_offset);
   gtk_button_set_label(fragmentoffsetbutton, label);
 
   // read and set time to live of ip packet
