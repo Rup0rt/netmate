@@ -179,14 +179,15 @@ void display_packet(GtkWidget *widget, gpointer data) {
   char ip_flags;			// ip header flags
   short ip_offset;			// ip fragment offset
 
+  // open pcap to find packet
+  handler = pcap_open_offline(filename, errbuf);
+  if (handler == NULL) return;
+
   // get currently selected packet
   selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(widget));
   if (gtk_tree_selection_get_selected(selection, &model, &iter)) {
     gtk_tree_model_get(model, &iter, 0, &packetnumber, -1);
   }
-
-  // open pcap to find packet
-  handler = pcap_open_offline(filename, errbuf);
 
   // iterate through packets until selected packet is found
   // this might also be done by preloading of this technique is too slow
@@ -290,6 +291,9 @@ void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore) {
   const u_char *packet;			// pcap packet pointer
   pcap_t *handler;			// pcap file handler
 
+  // clear all items
+  gtk_list_store_clear(packetliststore);
+
   // check for empty file pointer
   if (filename == NULL) return;
 
@@ -379,7 +383,7 @@ int main (int argc, char *argv[]) {
   gtk_window_set_title(mainwindow, title);
   free(title);
 
-  // check for given parameter
+  // try loading filename from parameters
   if (argv[1] != NULL) {
     filename = argv[1];
     loadpcapfile(GTK_WIDGET(mainwindow), packetliststore);
