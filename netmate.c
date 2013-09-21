@@ -268,6 +268,7 @@ int main (int argc, char *argv[]) {
   GtkTreeView *packettreeview;		// tree view for packets
   pcap_t *handler;			// pcap file handler
   GtkTreeIter iter;             	// iterator for filling tree view
+  GtkImageMenuItem *quitimagemenuitem;	// quit menu
   char *title;				// title of the program (main window)
   char *fname;				// file name to read pcap files from
   char errbuf[PCAP_ERRBUF_SIZE];	// pcap error buffer
@@ -286,6 +287,10 @@ int main (int argc, char *argv[]) {
   // init main window
   mainwindow = GTK_WINDOW(gtk_builder_get_object (builder, "mainwindow"));
   g_signal_connect (mainwindow, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+
+  // init main window
+  quitimagemenuitem = GTK_IMAGE_MENU_ITEM(gtk_builder_get_object (builder, "quitimagemenuitem"));
+  g_signal_connect (quitimagemenuitem, "activate", G_CALLBACK(gtk_main_quit), NULL);
 
   // init packet list store (database)
   packetliststore = GTK_LIST_STORE(gtk_builder_get_object (builder, "packetliststore"));
