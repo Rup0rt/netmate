@@ -12,9 +12,9 @@
 // size of ethernet header (in pcap format - NOT ethernet frame!)
 #define SIZE_ETHERNET 14
 
-void loadpcapfile(GtkListStore *packetliststore);
+void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore);
 
-char *filename;
+char *filename = NULL;
 
 // global buttons for renaming
 GtkButton *versionbutton;
@@ -276,13 +276,13 @@ void openpcapfile(GtkWidget *widget, gpointer data) {
 
   if (gtk_dialog_run (GTK_DIALOG (fileopendialog)) == GTK_RESPONSE_ACCEPT) {
     filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (fileopendialog));
-    loadpcapfile(GTK_LIST_STORE(data));
+    loadpcapfile(widget, GTK_LIST_STORE(data));
   }
 
   gtk_widget_destroy(GTK_WIDGET(fileopendialog));
 }
 
-void loadpcapfile(GtkListStore *packetliststore) {
+void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore) {
   GtkTreeIter iter;             	// iterator for filling tree view
   char errbuf[PCAP_ERRBUF_SIZE];	// pcap error buffer
   unsigned int i;			// loop variable
@@ -290,8 +290,25 @@ void loadpcapfile(GtkListStore *packetliststore) {
   const u_char *packet;			// pcap packet pointer
   pcap_t *handler;			// pcap file handler
 
+  // check for empty file pointer
+  if (filename == NULL) return;
+
+  // check if file exists
+  if (access(filename, F_OK ) == -1 ) {
+    show_error(widget, "File not found.");
+    filename = NULL;
+    return;
+  }
+
   //open file and create pcap handler
   handler = pcap_open_offline(filename, errbuf);
+
+  // check for proper pcap file
+  if (handler == NULL ) {
+    show_error(widget, "Invalid pcap format, try pcapfix :P");
+    filename = NULL;
+    return;
+  }
 
   // read packets from file and fill tree view
   i = 1;
@@ -365,7 +382,7 @@ int main (int argc, char *argv[]) {
   // check for given parameter
   if (argv[1] != NULL) {
     filename = argv[1];
-    loadpcapfile(packetliststore);
+    loadpcapfile(GTK_WIDGET(mainwindow), packetliststore);
   }
 
   // ENTER MAIN LOOP
