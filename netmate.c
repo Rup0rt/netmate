@@ -1,13 +1,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 #include <arpa/inet.h>
 #include <netinet/if_ether.h>
 #include <pcap.h>
 #include <gtk/gtk.h>
 
 // THE VERSION OF NETMATE
-#define VERSION "0.03"
+#define VERSION "0.04"
 
 // size of ethernet header (in pcap format - NOT ethernet frame!)
 #define SIZE_ETHERNET 14
@@ -314,12 +315,21 @@ void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore) {
     return;
   }
 
+  unsigned long begintime = -1;
+  char *pcaptime = malloc(20);
+
   // read packets from file and fill tree view
   i = 1;
   while (pcap_next_ex(handler, &header, &packet) >= 0) {
+    if (begintime == -1) begintime = (header->ts).tv_sec;
+
+    sprintf(pcaptime, "%lu.%lu", (header->ts).tv_sec-begintime, (header->ts).tv_usec);
+
     // insert new row into tree view
-    gtk_list_store_insert_with_values(packetliststore, &iter, -1, 0,  i++, -1);
+    gtk_list_store_insert_with_values(packetliststore, &iter, -1, 0,  i++, 1, pcaptime, -1);
   }
+
+  free(pcaptime);
 
   // close pcap handler
   pcap_close(handler);
