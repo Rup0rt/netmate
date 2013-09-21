@@ -12,6 +12,10 @@
 // size of ethernet header (in pcap format - NOT ethernet frame!)
 #define SIZE_ETHERNET 14
 
+void loadpcapfile(GtkListStore *packetliststore);
+
+char *filename;
+
 // global buttons for renaming
 GtkButton *versionbutton;
 GtkButton *ihlbutton;
@@ -160,7 +164,6 @@ void display_packet(GtkWidget *widget, gpointer data) {
   GtkTreeIter       iter;		// tree iterator
   pcap_t *handler;			// pcap file handler
   struct pcap_pkthdr *header;		// the header from libpcap
-  char *fname = *(char**)data;		// read file name from caller signal
   const u_char *packet;			// current packet pointer
   unsigned int packetnumber;		// currently secected packet number
   char *label;				// label of buttons to set
@@ -183,7 +186,7 @@ void display_packet(GtkWidget *widget, gpointer data) {
   }
 
   // open pcap to find packet
-  handler = pcap_open_offline(fname, errbuf);
+  handler = pcap_open_offline(filename, errbuf);
 
   // iterate through packets until selected packet is found
   // this might also be done by preloading of this technique is too slow
@@ -260,21 +263,56 @@ void display_packet(GtkWidget *widget, gpointer data) {
   pcap_close(handler);
 }
 
+void openpcapfile(GtkWidget *widget, gpointer data) {
+  GtkDialog *fileopendialog;
+
+  fileopendialog = GTK_DIALOG(gtk_file_chooser_dialog_new ("Open File",
+     				      GTK_WINDOW(gtk_widget_get_toplevel(widget)),
+     				      GTK_FILE_CHOOSER_ACTION_OPEN,
+     				      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+     				      GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+     				      NULL));
+  gtk_window_resize(GTK_WINDOW(fileopendialog), 1000, 500);
+
+  if (gtk_dialog_run (GTK_DIALOG (fileopendialog)) == GTK_RESPONSE_ACCEPT) {
+    filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (fileopendialog));
+    loadpcapfile(GTK_LIST_STORE(data));
+  }
+
+  gtk_widget_destroy(GTK_WIDGET(fileopendialog));
+}
+
+void loadpcapfile(GtkListStore *packetliststore) {
+  GtkTreeIter iter;             	// iterator for filling tree view
+  char errbuf[PCAP_ERRBUF_SIZE];	// pcap error buffer
+  unsigned int i;			// loop variable
+  struct pcap_pkthdr *header;		// pointer to pcap header
+  const u_char *packet;			// pcap packet pointer
+  pcap_t *handler;			// pcap file handler
+
+  //open file and create pcap handler
+  handler = pcap_open_offline(filename, errbuf);
+
+  // read packets from file and fill tree view
+  i = 1;
+  while (pcap_next_ex(handler, &header, &packet) >= 0) {
+    // insert new row into tree view
+    gtk_list_store_insert_with_values(packetliststore, &iter, -1, 0,  i++, -1);
+  }
+
+  // close pcap handler
+  pcap_close(handler);
+}
+
 /// MAIN FUNCTION ///
 int main (int argc, char *argv[]) {
   GtkBuilder *builder;			// the GUI builder object
   GtkWindow *mainwindow;		// main window object
   GtkListStore *packetliststore;	// list store for packets
   GtkTreeView *packettreeview;		// tree view for packets
-  pcap_t *handler;			// pcap file handler
-  GtkTreeIter iter;             	// iterator for filling tree view
+  GtkImageMenuItem *openimagemenuitem;	// file open menu
   GtkImageMenuItem *quitimagemenuitem;	// quit menu
   char *title;				// title of the program (main window)
-  char *fname;				// file name to read pcap files from
-  char errbuf[PCAP_ERRBUF_SIZE];	// pcap error buffer
-  struct pcap_pkthdr *header;		// pointer to pcap header
-  const u_char *packet;			// pcap packet pointer
-  unsigned int i;			// loop variable
 
   // init GTK with console parameters (change to getopts later)
   gtk_init(&argc, &argv);
@@ -288,16 +326,20 @@ int main (int argc, char *argv[]) {
   mainwindow = GTK_WINDOW(gtk_builder_get_object (builder, "mainwindow"));
   g_signal_connect (mainwindow, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
-  // init main window
-  quitimagemenuitem = GTK_IMAGE_MENU_ITEM(gtk_builder_get_object (builder, "quitimagemenuitem"));
-  g_signal_connect (quitimagemenuitem, "activate", G_CALLBACK(gtk_main_quit), NULL);
-
   // init packet list store (database)
   packetliststore = GTK_LIST_STORE(gtk_builder_get_object (builder, "packetliststore"));
 
+  // init open file menu
+  openimagemenuitem = GTK_IMAGE_MENU_ITEM(gtk_builder_get_object (builder, "openimagemenuitem"));
+  g_signal_connect(openimagemenuitem, "activate", G_CALLBACK(openpcapfile), packetliststore);
+
+  // init quit menu
+  quitimagemenuitem = GTK_IMAGE_MENU_ITEM(gtk_builder_get_object (builder, "quitimagemenuitem"));
+  g_signal_connect(quitimagemenuitem, "activate", G_CALLBACK(gtk_main_quit), NULL);
+
   // init packet tree view (database representation)
   packettreeview = GTK_TREE_VIEW(gtk_builder_get_object (builder, "packettreeview"));
-  g_signal_connect (packettreeview, "cursor-changed", G_CALLBACK(display_packet), &fname);
+  g_signal_connect (packettreeview, "cursor-changed", G_CALLBACK(display_packet), NULL);
 
   // init IP header buttons
   versionbutton = GTK_BUTTON(gtk_builder_get_object (builder, "versionbutton"));
@@ -320,27 +362,11 @@ int main (int argc, char *argv[]) {
   gtk_window_set_title(mainwindow, title);
   free(title);
 
-  // read file from argv
-  fname = argv[1];
-
   // check for given parameter
-  if (argv[1] == NULL) {
-    show_error(GTK_WIDGET(mainwindow), "No filename given.");
-    return(0);
+  if (argv[1] != NULL) {
+    filename = argv[1];
+    loadpcapfile(packetliststore);
   }
-
-  //open file and create pcap handler
-  handler = pcap_open_offline(fname, errbuf);
-
-  // read packets from file and fill tree view
-  i = 1;
-  while (pcap_next_ex(handler, &header, &packet) >= 0) {
-    // insert new row into tree view
-    gtk_list_store_insert_with_values(packetliststore, &iter, -1, 0,  i++, -1);
-  }
-
-  // close pcap handler
-  pcap_close(handler);
 
   // ENTER MAIN LOOP
   gtk_main();
