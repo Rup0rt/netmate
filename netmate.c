@@ -7,11 +7,12 @@
 #include <gtk/gtk.h>
 
 // THE VERSION OF NETMATE
-#define VERSION "0.02"
+#define VERSION "0.03"
 
+// size of ethernet header (in pcap format - NOT ethernet frame!)
 #define SIZE_ETHERNET 14
 
-pcap_t *handler;
+// global buttons for renaming
 GtkButton *versionbutton;
 GtkButton *ihlbutton;
 GtkButton *dscpbutton;
@@ -25,12 +26,9 @@ GtkButton *protocolbutton;
 GtkButton *headerchecksumbutton;
 GtkButton *sourceipaddressbutton;
 GtkButton *destinationipaddressbutton;
-GtkListStore *packetliststore;
-GtkTreeView *packettreeview;
 
-char *fname;
-
-struct sniff_ip {
+// struct of ip header
+struct ip_header {
   u_char ip_vhl;
   u_char ip_tos;
   u_short ip_len;
@@ -157,11 +155,26 @@ gint show_question(GtkWidget *widget, gpointer message) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void display_packet(GtkWidget *widget, gpointer data) {
-  GtkTreeSelection *selection;
-  GtkTreeModel     *model;
-  GtkTreeIter       iter;
+  GtkTreeSelection *selection;		// tree selection
+  GtkTreeModel     *model;		// tree model
+  GtkTreeIter       iter;		// tree iterator
+  pcap_t *handler;			// pcap file handler
+  struct pcap_pkthdr *header;		// the header from libpcap
+  char *fname = *(char**)data;		// read file name from caller signal
+  const u_char *packet;			// current packet pointer
+  unsigned int packetnumber;		// currently secected packet number
+  char *label;				// label of buttons to set
+  int i = 1;				// loop counter to track packet
+  char errbuf[PCAP_ERRBUF_SIZE];	// pcap error buffer
+  const struct ip_header *ip;		// ip_header pointer
 
-  unsigned int packetnumber;
+  // ip_header helper vars
+  char ip_version;			// ip version
+  char ip_headerlength;			// ip header length
+  char ip_dscp;				// ip dscp field
+  char ip_ecn;				// ip ecn field
+  char ip_flags;			// ip header flags
+  short ip_offset;			// ip fragment offset
 
   // get currently selected packet
   selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(widget));
@@ -169,92 +182,98 @@ void display_packet(GtkWidget *widget, gpointer data) {
     gtk_tree_model_get(model, &iter, 0, &packetnumber, -1);
   }
 
-   //The header that pcap gives us
-  struct pcap_pkthdr *header;
-
-  //The actual packet
-  const u_char *packet;
-
-  const struct sniff_ip *ip;
-  char ip_version;
-  char ip_headerlength;
-  char ip_dscp;
-  char ip_ecn;
-  char ip_flags;
-  short ip_offset;
-
-  char *label;
-
-  int i = 0;
-
-  char errbuf[PCAP_ERRBUF_SIZE];
-
-  // reopen for clicking
+  // open pcap to find packet
   handler = pcap_open_offline(fname, errbuf);
 
+  // iterate through packets until selected packet is found
+  // this might also be done by preloading of this technique is too slow
   while (i++ <= packetnumber) pcap_next_ex(handler, &header, &packet);
 
-    label = malloc(100);
+  // allocate memory for button label
+  label = malloc(100);
 
-    ip = (struct sniff_ip*)(packet + SIZE_ETHERNET);
+  // pointer to ip header
+  ip = (struct ip_header*)(packet + SIZE_ETHERNET);
 
-    ip_version = ip->ip_vhl >> 4;
-    sprintf(label, "Version (%u)", ip_version);
-    gtk_button_set_label(versionbutton, label);
+  // read and set ip version field
+  ip_version = ip->ip_vhl >> 4;
+  sprintf(label, "Version (%u)", ip_version);
+  gtk_button_set_label(versionbutton, label);
 
-    ip_headerlength = ip->ip_vhl << 2;
-    sprintf(label, "IHL (%u)", ip_headerlength);
-    gtk_button_set_label(ihlbutton, label);
+  // read and set ip header length
+  ip_headerlength = ip->ip_vhl << 2;
+  sprintf(label, "IHL (%u)", ip_headerlength);
+  gtk_button_set_label(ihlbutton, label);
 
-    ip_dscp = ip->ip_tos >> 2;
-    sprintf(label, "DSCP (0x%02x)", ip_dscp);
-    gtk_button_set_label(dscpbutton, label);
+  // read and set ip dscp field
+  ip_dscp = ip->ip_tos >> 2;
+  sprintf(label, "DSCP (0x%02x)", ip_dscp);
+  gtk_button_set_label(dscpbutton, label);
 
-    ip_ecn = ip->ip_tos & 0x03;
-    sprintf(label, "ECN (0x%02x)", ip_ecn);
-    gtk_button_set_label(ecnbutton, label);
+  // read and set ip ecn field
+  ip_ecn = ip->ip_tos & 0x03;
+  sprintf(label, "ECN (0x%02x)", ip_ecn);
+  gtk_button_set_label(ecnbutton, label);
 
-    sprintf(label, "Total Length (%u)", htons(ip->ip_len));
-    gtk_button_set_label(totallengthbutton, label);
+  // read and set total length of ip header
+  sprintf(label, "Total Length (%u)", htons(ip->ip_len));
+  gtk_button_set_label(totallengthbutton, label);
 
-    sprintf(label, "Identification (0x%04x)", htons(ip->ip_id));
-    gtk_button_set_label(identificationbutton, label);
+  // read and set identification field of ip packet
+  sprintf(label, "Identification (0x%04x)", htons(ip->ip_id));
+  gtk_button_set_label(identificationbutton, label);
 
-    ip_flags = htons(ip->ip_off) >> 13;
-    sprintf(label, "Flags (0x%02x)", ip_flags);
-    gtk_button_set_label(flagsbutton, label);
+  // read and set ip header flags
+  ip_flags = htons(ip->ip_off) >> 13;
+  sprintf(label, "Flags (0x%02x)", ip_flags);
+  gtk_button_set_label(flagsbutton, label);
 
-    ip_offset = (htons(ip->ip_off) & 0x1fff) << 3;
-    sprintf(label, "Fragment Offset (%u)", ip_offset);
-    gtk_button_set_label(fragmentoffsetbutton, label);
+  // read and set ip fragmentation offset
+  ip_offset = (htons(ip->ip_off) & 0x1fff) << 3;
+  sprintf(label, "Fragment Offset (%u)", ip_offset);
+  gtk_button_set_label(fragmentoffsetbutton, label);
 
-    sprintf(label, "Time To Live (%u)", ip->ip_ttl);
-    gtk_button_set_label(timetolivebutton, label);
+  // read and set time to live of ip packet
+  sprintf(label, "Time To Live (%u)", ip->ip_ttl);
+  gtk_button_set_label(timetolivebutton, label);
 
-    sprintf(label, "Protocol (%u)", ip->ip_p);
-    gtk_button_set_label(protocolbutton, label);
+  // read an d set upper layer protocol
+  sprintf(label, "Protocol (%u)", ip->ip_p);
+  gtk_button_set_label(protocolbutton, label);
 
-    sprintf(label, "Source IP Address (0x%08x = %s)", (ip->ip_src).s_addr, inet_ntoa(ip->ip_src));
-    gtk_button_set_label(sourceipaddressbutton, label);
+  // read and set ip source address
+  sprintf(label, "Source IP Address (0x%08x = %s)", (ip->ip_src).s_addr, inet_ntoa(ip->ip_src));
+  gtk_button_set_label(sourceipaddressbutton, label);
 
-    sprintf(label, "Destination IP Address (0x%08x = %s)", (ip->ip_dst).s_addr, inet_ntoa(ip->ip_dst));
-    gtk_button_set_label(destinationipaddressbutton, label);
+  // read and set ip destination address
+  sprintf(label, "Destination IP Address (0x%08x = %s)", (ip->ip_dst).s_addr, inet_ntoa(ip->ip_dst));
+  gtk_button_set_label(destinationipaddressbutton, label);
 
-    sprintf(label, "Header checksum (0x%04x)", htons(ip->ip_sum));
-    gtk_button_set_label(headerchecksumbutton, label);
+  // read and set ip header checksum
+  sprintf(label, "Header checksum (0x%04x)", htons(ip->ip_sum));
+  gtk_button_set_label(headerchecksumbutton, label);
 
-    free(label);
+  // free memory of label
+  free(label);
 
+  // close pcap handler
   pcap_close(handler);
-
 }
 
 /// MAIN FUNCTION ///
 int main (int argc, char *argv[]) {
   GtkBuilder *builder;			// the GUI builder object
   GtkWindow *mainwindow;		// main window object
-
-  char *title;
+  GtkListStore *packetliststore;	// list store for packets
+  GtkTreeView *packettreeview;		// tree view for packets
+  pcap_t *handler;			// pcap file handler
+  GtkTreeIter iter;             	// iterator for filling tree view
+  char *title;				// title of the program (main window)
+  char *fname;				// file name to read pcap files from
+  char errbuf[PCAP_ERRBUF_SIZE];	// pcap error buffer
+  struct pcap_pkthdr *header;		// pointer to pcap header
+  const u_char *packet;			// pcap packet pointer
+  unsigned int i;			// loop variable
 
   // init GTK with console parameters (change to getopts later)
   gtk_init(&argc, &argv);
@@ -264,15 +283,18 @@ int main (int argc, char *argv[]) {
   gtk_builder_add_from_file (builder, "netmate.ui", NULL);
   // for fileless compiling (gtk_builder_add_from_string)
 
-  // read objects needed to be passed as signal parameters
+  // init main window
   mainwindow = GTK_WINDOW(gtk_builder_get_object (builder, "mainwindow"));
   g_signal_connect (mainwindow, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
+  // init packet list store (database)
   packetliststore = GTK_LIST_STORE(gtk_builder_get_object (builder, "packetliststore"));
 
+  // init packet tree view (database representation)
   packettreeview = GTK_TREE_VIEW(gtk_builder_get_object (builder, "packettreeview"));
-  g_signal_connect (packettreeview, "cursor-changed", G_CALLBACK(display_packet), NULL);
+  g_signal_connect (packettreeview, "cursor-changed", G_CALLBACK(display_packet), &fname);
 
+  // init IP header buttons
   versionbutton = GTK_BUTTON(gtk_builder_get_object (builder, "versionbutton"));
   ihlbutton = GTK_BUTTON(gtk_builder_get_object (builder, "ihlbutton"));
   dscpbutton = GTK_BUTTON(gtk_builder_get_object (builder, "dscpbutton"));
@@ -287,44 +309,37 @@ int main (int argc, char *argv[]) {
   sourceipaddressbutton = GTK_BUTTON(gtk_builder_get_object (builder, "sourceipaddressbutton"));
   destinationipaddressbutton = GTK_BUTTON(gtk_builder_get_object (builder, "destinationipaddressbutton"));
 
-  // MAIN WINDOW
   // set title of main window
   title = malloc(100);
   sprintf(title, "NetMate v%s", VERSION);
   gtk_window_set_title(mainwindow, title);
   free(title);
 
+  // read file from argv
+  fname = argv[1];
+
+  // check for given parameter
   if (argv[1] == NULL) {
     show_error(GTK_WIDGET(mainwindow), "No filename given.");
     return(0);
   }
 
-  fname = argv[1];
-
-  //error buffer
-  char errbuf[PCAP_ERRBUF_SIZE];
-
   //open file and create pcap handler
   handler = pcap_open_offline(fname, errbuf);
 
-   //The header that pcap gives us
-  struct pcap_pkthdr *header;
-
-  //The actual packet
-  const u_char *packet;
-
-  GtkTreeIter iter;             // iterator
-
-  unsigned int i = 0;
+  // read packets from file and fill tree view
+  i = 1;
   while (pcap_next_ex(handler, &header, &packet) >= 0) {
-    // insert new row into friendlist
+    // insert new row into tree view
     gtk_list_store_insert_with_values(packetliststore, &iter, -1, 0,  i++, -1);
   }
 
+  // close pcap handler
   pcap_close(handler);
 
   // ENTER MAIN LOOP
   gtk_main();
 
+  // exit
   return 0;
 }
