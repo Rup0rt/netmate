@@ -64,7 +64,7 @@
         </child>
         <child>
           <object class="GtkScrolledWindow" id="packetscrolledwindow">
-            <property name="height_request">200</property>
+            <property name="height_request">400</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="shadow_type">in</property>
@@ -116,7 +116,6 @@
             <property name="can_focus">True</property>
             <child>
               <object class="GtkGrid" id="ethernetgrid">
-                <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="column_homogeneous">True</property>
                 <child>
@@ -405,7 +404,6 @@
             </child>
             <child>
               <object class="GtkGrid" id="ipv4grid">
-                <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="column_homogeneous">True</property>
                 <child>
@@ -1124,25 +1122,10 @@ A checksum on the header only.  Since some header fields change (e.g., time to l
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="label4">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">placeholder</property>
-              </object>
-              <packing>
-                <property name="position">2</property>
-              </packing>
+              <placeholder/>
             </child>
             <child type="tab">
-              <object class="GtkLabel" id="tcplabel">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">TCP</property>
-              </object>
-              <packing>
-                <property name="position">2</property>
-                <property name="tab_fill">False</property>
-              </packing>
+              <placeholder/>
             </child>
           </object>
           <packing>

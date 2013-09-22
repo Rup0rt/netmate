@@ -12,7 +12,7 @@
 #endif
 
 // THE VERSION OF NETMATE
-#define VERSION "0.06"
+#define VERSION "0.07"
 
 void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore);
 
@@ -37,6 +37,11 @@ GtkButton *ipv4_protocolbutton;
 GtkButton *ipv4_headerchecksumbutton;
 GtkButton *ipv4_sourceipaddressbutton;
 GtkButton *ipv4_destinationipaddressbutton;
+
+// global grids (protocol container)
+GtkNotebook *protocolheadernotebook;
+GtkGrid *ethernetgrid;
+GtkGrid *ipv4grid;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // GTK INFORMATION WINDOWS //
@@ -185,6 +190,11 @@ void display_packet(GtkWidget *widget, gpointer data) {
   // this might also be done by preloading of this technique is too slow
   while (i++ <= packetnumber) pcap_next_ex(handler, &header, &packet);
 
+  int pos;
+  pos = gtk_notebook_get_current_page(protocolheadernotebook);
+  gtk_widget_hide(GTK_WIDGET(ethernetgrid));
+  gtk_widget_hide(GTK_WIDGET(ipv4grid));
+
   // allocate memory for button label
   label = malloc(100);
 
@@ -270,6 +280,11 @@ void display_packet(GtkWidget *widget, gpointer data) {
 
   // free memory of label
   free(label);
+
+  gtk_widget_show_all(GTK_WIDGET(ethernetgrid));
+  gtk_widget_show_all(GTK_WIDGET(ipv4grid));
+
+  gtk_notebook_set_current_page(protocolheadernotebook, pos);
 
   // close pcap handler
   pcap_close(handler);
@@ -387,6 +402,10 @@ int main (int argc, char *argv[]) {
   eth_sourcemacbutton = GTK_BUTTON(gtk_builder_get_object (builder, "eth_sourcemacbutton"));
   eth_typebutton = GTK_BUTTON(gtk_builder_get_object (builder, "eth_typebutton"));
 
+  // init grids
+  ethernetgrid = GTK_GRID(gtk_builder_get_object (builder, "ethernetgrid"));
+  ipv4grid = GTK_GRID(gtk_builder_get_object (builder, "ipv4grid"));
+
   // init IP header buttons
   ipv4_versionbutton = GTK_BUTTON(gtk_builder_get_object (builder, "ipv4_versionbutton"));
   ipv4_ihlbutton = GTK_BUTTON(gtk_builder_get_object (builder, "ipv4_ihlbutton"));
@@ -415,6 +434,8 @@ int main (int argc, char *argv[]) {
     filename = argv[1];
     loadpcapfile(GTK_WIDGET(mainwindow), packetliststore);
   }
+
+  protocolheadernotebook = GTK_NOTEBOOK(gtk_builder_get_object (builder, "protocolheadernotebook"));
 
   // ENTER MAIN LOOP
   gtk_main();
