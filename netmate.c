@@ -13,7 +13,7 @@
 #endif
 
 // THE VERSION OF NETMATE
-#define VERSION "0.08"
+#define VERSION "0.09"
 
 // ADDITIONAL LINK TYPES
 #define LINKTYPE_LINUX_SLL 113
@@ -445,15 +445,28 @@ void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore) {
     return;
   }
 
-  unsigned long begintime = -1;
+  long begintime = -1;
+  long beginutime;
+  long realtime;
+  long realutime;
   char *pcaptime = malloc(20);
 
   // read packets from file and fill tree view
   i = 1;
   while (pcap_next_ex(handler, &header, &packet) >= 0) {
-    if (begintime == -1) begintime = (header->ts).tv_sec;
+    if (begintime == -1) {
+       begintime = (header->ts).tv_sec;
+       beginutime = (header->ts).tv_usec;
+    }
 
-    sprintf(pcaptime, "%lu.%lu", (header->ts).tv_sec-begintime, (header->ts).tv_usec);
+    realtime = (header->ts).tv_sec-begintime;
+    realutime = (header->ts).tv_usec-beginutime;
+    if (realutime < 0) {
+      realtime--;
+      realutime += 1000000;
+    }
+
+    sprintf(pcaptime, "%ld.%06ld", realtime, realutime);
 
     // insert new row into tree view
     gtk_list_store_insert_with_values(packetliststore, &iter, -1, 0,  i++, 1, pcaptime, -1);
