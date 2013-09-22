@@ -10,10 +10,11 @@
   #include <arpa/inet.h>
   #include <netinet/if_ether.h>
   #include <netinet/ip.h>
+  #include <netinet/tcp.h>
 #endif
 
 // THE VERSION OF NETMATE
-#define VERSION "0.09"
+#define VERSION "0.10"
 
 // ADDITIONAL LINK TYPES
 #define LINKTYPE_LINUX_SLL 113
@@ -21,6 +22,19 @@
 void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore);
 
 char *filename = NULL;
+
+// global grids (protocol container)
+GtkNotebook *protocolheadernotebook;
+
+// layer2
+GtkGrid *ethernetgrid;
+GtkGrid *sllgrid;
+
+// layer3
+GtkGrid *ipv4grid;
+
+// layer4
+GtkGrid *tcpgrid;
 
 // global ethernet buttons
 GtkButton *eth_destmacbutton;
@@ -53,13 +67,17 @@ GtkButton *ipv4_headerchecksumbutton;
 GtkButton *ipv4_sourceipaddressbutton;
 GtkButton *ipv4_destinationipaddressbutton;
 
-// global grids (protocol container)
-GtkNotebook *protocolheadernotebook;
-// layer2
-GtkGrid *ethernetgrid;
-GtkGrid *sllgrid;
-// layer3
-GtkGrid *ipv4grid;
+// global tcp buttons
+GtkButton *tcp_destportbutton;
+GtkButton *tcp_sourceportbutton;
+GtkButton *tcp_seqnumbutton;
+GtkButton *tcp_acknumbutton;
+GtkButton *tcp_offsetbutton;
+GtkButton *tcp_reservedbutton;
+GtkButton *tcp_flagsbutton;
+GtkButton *tcp_winsizebutton;
+GtkButton *tcp_checksumbutton;
+GtkButton *tcp_urgentpointerbutton;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // GTK INFORMATION WINDOWS //
@@ -308,6 +326,49 @@ void fill_ipv4(struct iphdr *ipv4) {
   gtk_widget_show_all(GTK_WIDGET(ipv4grid));
 }
 
+void fill_tcp(struct tcphdr *tcp) {
+  char *label;		// label of buttons to set
+
+  // allocate memory for button label
+  label = malloc(100);
+
+  sprintf(label, "Source Port (%u)", htons(tcp->source));
+  gtk_button_set_label(tcp_sourceportbutton, label);
+
+  sprintf(label, "Destination Port (%u)", htons(tcp->dest));
+  gtk_button_set_label(tcp_destportbutton, label);
+
+  sprintf(label, "Sequence Number (%u)", htonl(tcp->seq));
+  gtk_button_set_label(tcp_seqnumbutton, label);
+
+  sprintf(label, "Acknowledgement Number (%u)", htonl(tcp->ack_seq));
+  gtk_button_set_label(tcp_acknumbutton, label);
+
+  sprintf(label, "Data Offset (0x%02x)", tcp->doff);
+  gtk_button_set_label(tcp_offsetbutton, label);
+
+  sprintf(label, "Reserved (0x%02x)", tcp->res1 & 0x0e);
+  gtk_button_set_label(tcp_reservedbutton, label);
+
+  sprintf(label, "Flags (%u%u%u%u%u%u%u%u%ub)", tcp->res1 & 0x01, tcp->res2 & 0x02, tcp->res2 & 0x01, tcp->urg, tcp->ack, tcp->psh, tcp->rst, tcp->syn, tcp->fin);
+  gtk_button_set_label(tcp_flagsbutton, label);
+
+  sprintf(label, "Window Size (%u)", htons(tcp->window));
+  gtk_button_set_label(tcp_winsizebutton, label);
+
+  sprintf(label, "Checksum (0x%04x)", htons(tcp->check));
+  gtk_button_set_label(tcp_checksumbutton, label);
+
+  sprintf(label, "Urgent Pointer (0x%04x)", htons(tcp->urg_ptr));
+  gtk_button_set_label(tcp_urgentpointerbutton, label);
+
+  // free memory of label
+  free(label);
+
+  // show ethernet grid (tab)
+  gtk_widget_show_all(GTK_WIDGET(tcpgrid));
+}
+
 void display_packet(GtkWidget *widget, gpointer data) {
   GtkTreeSelection *selection;		// tree selection
   GtkTreeModel     *model;		// tree model
@@ -318,8 +379,9 @@ void display_packet(GtkWidget *widget, gpointer data) {
   const u_char *packet;			// current packet pointer
   unsigned int packetnumber;		// currently secected packet number
   struct ether_header *eth;
-  struct iphdr *ipv4;			// ipv4_header pointer
   struct sll_header *sll;		// sll header (linux cooked)
+  struct iphdr *ipv4;			// ipv4_header pointer
+  struct tcphdr *tcp;
   int i = 1;				// loop counter to track packet
   unsigned short layer3 = 0;
   void *layer3ptr = NULL;
@@ -344,7 +406,9 @@ void display_packet(GtkWidget *widget, gpointer data) {
   int pos;
   pos = gtk_notebook_get_current_page(protocolheadernotebook);
   gtk_widget_hide(GTK_WIDGET(ethernetgrid));
+  gtk_widget_hide(GTK_WIDGET(sllgrid));
   gtk_widget_hide(GTK_WIDGET(ipv4grid));
+  gtk_widget_hide(GTK_WIDGET(tcpgrid));
 
   switch (pcap_datalink(handler)) {
 
@@ -383,6 +447,16 @@ void display_packet(GtkWidget *widget, gpointer data) {
 
       // display ipv4 tab
       fill_ipv4(ipv4);
+
+      switch (ipv4->protocol) {
+        case IPPROTO_TCP:
+          tcp = (struct tcphdr*)(layer3ptr + sizeof(struct iphdr));
+
+	  fill_tcp(tcp);
+
+          break;
+      }
+
       break;
   }
 
@@ -475,6 +549,11 @@ void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore) {
 
   // clear all items
   gtk_list_store_clear(packetliststore);
+
+  gtk_widget_hide(GTK_WIDGET(ethernetgrid));
+  gtk_widget_hide(GTK_WIDGET(sllgrid));
+  gtk_widget_hide(GTK_WIDGET(ipv4grid));
+  gtk_widget_hide(GTK_WIDGET(tcpgrid));
 
   // check for empty file pointer
   if (filename == NULL) return;
@@ -575,6 +654,7 @@ int main (int argc, char *argv[]) {
   ethernetgrid = GTK_GRID(gtk_builder_get_object (builder, "ethernetgrid"));
   sllgrid = GTK_GRID(gtk_builder_get_object (builder, "sllgrid"));
   ipv4grid = GTK_GRID(gtk_builder_get_object (builder, "ipv4grid"));
+  tcpgrid = GTK_GRID(gtk_builder_get_object (builder, "tcpgrid"));
 
   // init ethernet header buttons
   eth_destmacbutton = GTK_BUTTON(gtk_builder_get_object (builder, "eth_destmacbutton"));
@@ -606,6 +686,18 @@ int main (int argc, char *argv[]) {
   ipv4_headerchecksumbutton = GTK_BUTTON(gtk_builder_get_object (builder, "ipv4_headerchecksumbutton"));
   ipv4_sourceipaddressbutton = GTK_BUTTON(gtk_builder_get_object (builder, "ipv4_sourceipaddressbutton"));
   ipv4_destinationipaddressbutton = GTK_BUTTON(gtk_builder_get_object (builder, "ipv4_destinationipaddressbutton"));
+
+  // init TCP header buttons
+  tcp_destportbutton = GTK_BUTTON(gtk_builder_get_object (builder, "tcp_destportbutton"));
+  tcp_sourceportbutton = GTK_BUTTON(gtk_builder_get_object (builder, "tcp_sourceportbutton"));
+  tcp_seqnumbutton = GTK_BUTTON(gtk_builder_get_object (builder, "tcp_seqnumbutton"));
+  tcp_acknumbutton = GTK_BUTTON(gtk_builder_get_object (builder, "tcp_acknumbutton"));
+  tcp_offsetbutton = GTK_BUTTON(gtk_builder_get_object (builder, "tcp_offsetbutton"));
+  tcp_reservedbutton = GTK_BUTTON(gtk_builder_get_object (builder, "tcp_reservedbutton"));
+  tcp_flagsbutton = GTK_BUTTON(gtk_builder_get_object (builder, "tcp_flagsbutton"));
+  tcp_winsizebutton = GTK_BUTTON(gtk_builder_get_object (builder, "tcp_winsizebutton"));
+  tcp_checksumbutton = GTK_BUTTON(gtk_builder_get_object (builder, "tcp_checksumbutton"));
+  tcp_urgentpointerbutton = GTK_BUTTON(gtk_builder_get_object (builder, "tcp_urgentpointerbutton"));
 
   // set title of main window
   title = malloc(100);
