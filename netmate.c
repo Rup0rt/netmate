@@ -8,13 +8,11 @@
 #ifndef WIN32
   #include <arpa/inet.h>
   #include <netinet/if_ether.h>
+  #include <netinet/ip.h>
 #endif
 
 // THE VERSION OF NETMATE
 #define VERSION "0.06"
-
-// size of ethernet header (in pcap format - NOT ethernet frame!)
-#define SIZE_ETHERNET 14
 
 void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore);
 
@@ -39,24 +37,6 @@ GtkButton *ipv4_protocolbutton;
 GtkButton *ipv4_headerchecksumbutton;
 GtkButton *ipv4_sourceipaddressbutton;
 GtkButton *ipv4_destinationipaddressbutton;
-
-// struct of ipv4 header
-struct ipv4_header {
-  u_char ip_vhl;
-  u_char ip_tos;
-  u_short ip_len;
-  u_short ip_id;
-  u_short ip_off;
-    #define IP_RF 0x8000
-    #define IP_DF 0x4000
-    #define IP_MF 0x2000
-    #define IP_OFFMASK 0x1fff
-  u_char ip_ttl;
-  u_char ip_p;
-  u_short ip_sum;
-  struct in_addr ip_src;
-  struct in_addr ip_dst;
-};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // GTK INFORMATION WINDOWS //
@@ -179,7 +159,7 @@ void display_packet(GtkWidget *widget, gpointer data) {
   int i = 1;				// loop counter to track packet
   char errbuf[PCAP_ERRBUF_SIZE];	// pcap error buffer
   const struct ether_header *eth;
-  const struct ipv4_header *ip;		// ipv4_header pointer
+  const struct iphdr *ip;		// ipv4_header pointer
 
   // ipv4_header helper vars
   char ipv4_version;			// ip version
@@ -224,25 +204,25 @@ void display_packet(GtkWidget *widget, gpointer data) {
   gtk_button_set_label(eth_typebutton, label);
 
   // IPV4
-  ip = (struct ipv4_header*)(packet + SIZE_ETHERNET);
+  ip = (struct iphdr*)(packet + sizeof(struct ether_header));
 
   // read and set ip version field
-  ipv4_version = ip->ip_vhl >> 4;
+  ipv4_version = ip->version;
   sprintf(label, "Version (%u)", ipv4_version);
   gtk_button_set_label(ipv4_versionbutton, label);
 
   // read and set ip header length (<< 2 to calculate real size)
-  ipv4_headerlength = ip->ip_vhl & 0x0f;
+  ipv4_headerlength = ip->ihl;
   sprintf(label, "IHL (0x%02x)", ipv4_headerlength);
   gtk_button_set_label(ipv4_ihlbutton, label);
 
   // read and set ip dscp field
-  ipv4_dscp = ip->ip_tos >> 2;
+  ipv4_dscp = ip->tos >> 2;
   sprintf(label, "DSCP (0x%02x)", ipv4_dscp);
   gtk_button_set_label(ipv4_dscpbutton, label);
 
   // read and set ip ecn field
-  ipv4_ecn = ip->ip_tos & 0x03;
+  ipv4_ecn = ip->tos & 0x03;
   sprintf(label, "ECN\n(0x%02x)", ipv4_ecn);
 //  sprintf(label, "<span size='7000'>ECN (0x%02x)</span>", ipv4_ecn);
 //  GtkWidget *test = gtk_label_new(NULL);
@@ -251,42 +231,42 @@ void display_packet(GtkWidget *widget, gpointer data) {
 //  gtk_button_set_image(ipv4_ecnbutton, test);
 
   // read and set total length of ip header
-  sprintf(label, "Total Length (%u)", htons(ip->ip_len));
+  sprintf(label, "Total Length (%u)", htons(ip->tot_len));
   gtk_button_set_label(ipv4_totallengthbutton, label);
 
   // read and set identification field of ip packet
-  sprintf(label, "Identification (0x%04x)", htons(ip->ip_id));
+  sprintf(label, "Identification (0x%04x)", htons(ip->id));
   gtk_button_set_label(ipv4_identificationbutton, label);
 
   // read and set ip header flags
-  ipv4_flags = htons(ip->ip_off) >> 13;
+  ipv4_flags = htons(ip->frag_off) >> 13;
   sprintf(label, "Flags (0x%02x)", ipv4_flags);
   gtk_button_set_label(ipv4_flagsbutton, label);
 
   // read and set ip fragmentation offset (<< 3 to calculate real size);
-  ipv4_offset = (htons(ip->ip_off) & 0x1fff);
+  ipv4_offset = (htons(ip->frag_off) & 0x1fff);
   sprintf(label, "Fragment Offset (0x%04x)", ipv4_offset);
   gtk_button_set_label(ipv4_fragmentoffsetbutton, label);
 
   // read and set time to live of ip packet
-  sprintf(label, "Time To Live (%u)", ip->ip_ttl);
+  sprintf(label, "Time To Live (%u)", ip->ttl);
   gtk_button_set_label(ipv4_timetolivebutton, label);
 
   // read an d set upper layer protocol
-  sprintf(label, "Protocol (%u)", ip->ip_p);
+  sprintf(label, "Protocol (%u)", ip->protocol);
   gtk_button_set_label(ipv4_protocolbutton, label);
 
+  // read and set ip header checksum
+  sprintf(label, "Header checksum (0x%04x)", htons(ip->check));
+  gtk_button_set_label(ipv4_headerchecksumbutton, label);
+
   // read and set ip source address
-  sprintf(label, "Source IP Address (0x%08x = %s)", (unsigned int)(ip->ip_src).s_addr, inet_ntoa(ip->ip_src));
+  sprintf(label, "Source IP Address (0x%08x = %u.%u.%u.%u)", htonl(ip->saddr), ip->saddr & 0xff, (ip->saddr >> 8) & 0xff, (ip->saddr >> 16) & 0xff, (ip->saddr >> 24) & 0xff);
   gtk_button_set_label(ipv4_sourceipaddressbutton, label);
 
   // read and set ip destination address
-  sprintf(label, "Destination IP Address (0x%08x = %s)", (unsigned int)(ip->ip_dst).s_addr, inet_ntoa(ip->ip_dst));
+  sprintf(label, "Destination IP Address (0x%08x = %u.%u.%u.%u)", htonl(ip->daddr), ip->daddr & 0xff, (ip->daddr >> 8) & 0xff, (ip->daddr >> 16) & 0xff, (ip->daddr >> 24) & 0xff);
   gtk_button_set_label(ipv4_destinationipaddressbutton, label);
-
-  // read and set ip header checksum
-  sprintf(label, "Header checksum (0x%04x)", htons(ip->ip_sum));
-  gtk_button_set_label(ipv4_headerchecksumbutton, label);
 
   // free memory of label
   free(label);
