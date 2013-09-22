@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <pcap.h>
+#include <pcap/sll.h>
 #include <gtk/gtk.h>
 
 #ifndef WIN32
@@ -12,7 +13,10 @@
 #endif
 
 // THE VERSION OF NETMATE
-#define VERSION "0.07"
+#define VERSION "0.08"
+
+// ADDITIONAL LINK TYPES
+#define LINKTYPE_LINUX_SLL 113
 
 void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore);
 
@@ -20,8 +24,19 @@ char *filename = NULL;
 
 // global ethernet buttons
 GtkButton *eth_destmacbutton;
+GtkButton *eth_destmacbutton2;
 GtkButton *eth_sourcemacbutton;
+GtkButton *eth_sourcemacbutton2;
 GtkButton *eth_typebutton;
+
+// global sll buttons
+GtkButton *sll_packetbutton;
+GtkButton *sll_arphdrbutton;
+GtkButton *sll_lengthbutton;
+GtkButton *sll_addressbutton;
+GtkButton *sll_addressbutton2;
+GtkButton *sll_addressbutton3;
+GtkButton *sll_protocolbutton;
 
 // global ipv4 buttons
 GtkButton *ipv4_versionbutton;
@@ -40,7 +55,10 @@ GtkButton *ipv4_destinationipaddressbutton;
 
 // global grids (protocol container)
 GtkNotebook *protocolheadernotebook;
+// layer2
 GtkGrid *ethernetgrid;
+GtkGrid *sllgrid;
+// layer3
 GtkGrid *ipv4grid;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -161,13 +179,15 @@ void fill_ethernet(struct ether_header *eth) {
   // destination mac
   sprintf(label, "Destination (%02x:%02x:%02x:%02x:%02x:%02x)", eth->ether_dhost[0], eth->ether_dhost[1], eth->ether_dhost[2], eth->ether_dhost[3], eth->ether_dhost[4], eth->ether_dhost[5]);
   gtk_button_set_label(eth_destmacbutton, label);
+  gtk_button_set_label(eth_destmacbutton2, label);
 
   // source mac
   sprintf(label, "Source (%02x:%02x:%02x:%02x:%02x:%02x)", eth->ether_shost[0], eth->ether_shost[1], eth->ether_shost[2], eth->ether_shost[3], eth->ether_shost[4], eth->ether_shost[5]);
   gtk_button_set_label(eth_sourcemacbutton, label);
+  gtk_button_set_label(eth_sourcemacbutton2, label);
 
   // source mac
-  sprintf(label, "Type (0x%04x)", htons(eth->ether_type));
+  sprintf(label, "Type\n(0x%04x)", htons(eth->ether_type));
   gtk_button_set_label(eth_typebutton, label);
 
   // free memory of label
@@ -175,6 +195,36 @@ void fill_ethernet(struct ether_header *eth) {
 
   // show ethernet grid (tab)
   gtk_widget_show_all(GTK_WIDGET(ethernetgrid));
+}
+
+void fill_sll(struct sll_header *sll) {
+  char *label;		// label of buttons to set
+
+  // allocate memory for button label
+  label = malloc(100);
+
+  sprintf(label, "Packet Type (0x%04x)", htons(sll->sll_pkttype));
+  gtk_button_set_label(sll_packetbutton, label);
+
+  sprintf(label, "ARPHDR_ Type (0x%04x)", htons(sll->sll_hatype));
+  gtk_button_set_label(sll_arphdrbutton, label);
+
+  sprintf(label, "Link-layer Address Length (0x%04x)", htons(sll->sll_halen));
+  gtk_button_set_label(sll_lengthbutton, label);
+
+  sprintf(label, "Link-layer Address (%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x)", sll->sll_addr[0], sll->sll_addr[1], sll->sll_addr[2], sll->sll_addr[3], sll->sll_addr[4], sll->sll_addr[5], sll->sll_addr[6], sll->sll_addr[7]);
+  gtk_button_set_label(sll_addressbutton, label);
+  gtk_button_set_label(sll_addressbutton2, label);
+  gtk_button_set_label(sll_addressbutton3, label);
+
+  sprintf(label, "Protocol Type (0x%04x)", htons(sll->sll_protocol));
+  gtk_button_set_label(sll_protocolbutton, label);
+
+  // free memory of label
+  free(label);
+
+  // show ethernet grid (tab)
+  gtk_widget_show_all(GTK_WIDGET(sllgrid));
 }
 
 void fill_ipv4(struct iphdr *ipv4) {
@@ -269,7 +319,10 @@ void display_packet(GtkWidget *widget, gpointer data) {
   unsigned int packetnumber;		// currently secected packet number
   struct ether_header *eth;
   struct iphdr *ipv4;			// ipv4_header pointer
+  struct sll_header *sll;		// sll header (linux cooked)
   int i = 1;				// loop counter to track packet
+  unsigned short layer3 = 0;
+  void *layer3ptr = NULL;
 
   if (filename == NULL) return;
 
@@ -294,6 +347,7 @@ void display_packet(GtkWidget *widget, gpointer data) {
   gtk_widget_hide(GTK_WIDGET(ipv4grid));
 
   switch (pcap_datalink(handler)) {
+
     case DLT_EN10MB:
       // set pointer to ethernet header
       eth = (struct ether_header*)(packet);
@@ -301,20 +355,35 @@ void display_packet(GtkWidget *widget, gpointer data) {
       // display ethernet tab
       fill_ethernet(eth);
 
-      switch (htons(eth->ether_type)) {
-        case ETHERTYPE_IP:
-          // IPV4
-          ipv4 = (struct iphdr*)(packet + sizeof(struct ether_header));
+      layer3 = htons(eth->ether_type);
+      layer3ptr = (void*)(packet + sizeof(struct ether_header));
 
-          // display ipv4 tab
-          fill_ipv4(ipv4);
-          break;
-      }
+      break;
+    case LINKTYPE_LINUX_SLL:
+      // LINUX COOKED
+      sll = (struct sll_header*)(packet);
+
+      // display sll tab
+      fill_sll(sll);
+
+      layer3 = htons(sll->sll_protocol);
+      layer3ptr = (void*)(packet + sizeof(struct sll_header));
 
       break;
     default:
       show_error(widget, "Unsupported link-layer. Please request author to add it!");
+      printf("Layer type: %u\n", pcap_datalink(handler));
       return;
+  }
+
+  switch (layer3) {
+    case ETHERTYPE_IP:
+      // IPV4
+      ipv4 = (struct iphdr*)layer3ptr;
+
+      // display ipv4 tab
+      fill_ipv4(ipv4);
+      break;
   }
 
   // switch to tab that was former selected
@@ -433,14 +502,26 @@ int main (int argc, char *argv[]) {
   packettreeview = GTK_TREE_VIEW(gtk_builder_get_object (builder, "packettreeview"));
   g_signal_connect (packettreeview, "cursor-changed", G_CALLBACK(display_packet), NULL);
 
-  // init ethernet header buttons
-  eth_destmacbutton = GTK_BUTTON(gtk_builder_get_object (builder, "eth_destmacbutton"));
-  eth_sourcemacbutton = GTK_BUTTON(gtk_builder_get_object (builder, "eth_sourcemacbutton"));
-  eth_typebutton = GTK_BUTTON(gtk_builder_get_object (builder, "eth_typebutton"));
-
   // init grids
   ethernetgrid = GTK_GRID(gtk_builder_get_object (builder, "ethernetgrid"));
+  sllgrid = GTK_GRID(gtk_builder_get_object (builder, "sllgrid"));
   ipv4grid = GTK_GRID(gtk_builder_get_object (builder, "ipv4grid"));
+
+  // init ethernet header buttons
+  eth_destmacbutton = GTK_BUTTON(gtk_builder_get_object (builder, "eth_destmacbutton"));
+  eth_destmacbutton2 = GTK_BUTTON(gtk_builder_get_object (builder, "eth_destmacbutton2"));
+  eth_sourcemacbutton = GTK_BUTTON(gtk_builder_get_object (builder, "eth_sourcemacbutton"));
+  eth_sourcemacbutton2 = GTK_BUTTON(gtk_builder_get_object (builder, "eth_sourcemacbutton2"));
+  eth_typebutton = GTK_BUTTON(gtk_builder_get_object (builder, "eth_typebutton"));
+
+  // init sll header buttons
+  sll_packetbutton = GTK_BUTTON(gtk_builder_get_object (builder, "sll_packetbutton"));
+  sll_arphdrbutton = GTK_BUTTON(gtk_builder_get_object (builder, "sll_arphdrbutton"));
+  sll_lengthbutton = GTK_BUTTON(gtk_builder_get_object (builder, "sll_lengthbutton"));
+  sll_addressbutton = GTK_BUTTON(gtk_builder_get_object (builder, "sll_addressbutton"));
+  sll_addressbutton2 = GTK_BUTTON(gtk_builder_get_object (builder, "sll_addressbutton2"));
+  sll_addressbutton3 = GTK_BUTTON(gtk_builder_get_object (builder, "sll_addressbutton3"));
+  sll_protocolbutton = GTK_BUTTON(gtk_builder_get_object (builder, "sll_protocolbutton"));
 
   // init IP header buttons
   ipv4_versionbutton = GTK_BUTTON(gtk_builder_get_object (builder, "ipv4_versionbutton"));
