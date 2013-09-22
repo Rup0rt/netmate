@@ -20,7 +20,12 @@ void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore);
 
 char *filename = NULL;
 
-// global buttons for renaming
+// global ethernet buttons
+GtkButton *eth_destmacbutton;
+GtkButton *eth_sourcemacbutton;
+GtkButton *eth_typebutton;
+
+// global ipv4 buttons
 GtkButton *ipv4_versionbutton;
 GtkButton *ipv4_ihlbutton;
 GtkButton *ipv4_dscpbutton;
@@ -173,6 +178,7 @@ void display_packet(GtkWidget *widget, gpointer data) {
   char *label;				// label of buttons to set
   int i = 1;				// loop counter to track packet
   char errbuf[PCAP_ERRBUF_SIZE];	// pcap error buffer
+  const struct ether_header *eth;
   const struct ipv4_header *ip;		// ipv4_header pointer
 
   // ipv4_header helper vars
@@ -202,7 +208,22 @@ void display_packet(GtkWidget *widget, gpointer data) {
   // allocate memory for button label
   label = malloc(100);
 
-  // pointer to ip header
+  // ETHERNET
+  eth = (struct ether_header*)(packet);
+
+  // destination mac
+  sprintf(label, "Destination (%02x:%02x:%02x:%02x:%02x:%02x)", eth->ether_dhost[0], eth->ether_dhost[1], eth->ether_dhost[2], eth->ether_dhost[3], eth->ether_dhost[4], eth->ether_dhost[5]);
+  gtk_button_set_label(eth_destmacbutton, label);
+
+  // source mac
+  sprintf(label, "Source (%02x:%02x:%02x:%02x:%02x:%02x)", eth->ether_shost[0], eth->ether_shost[1], eth->ether_shost[2], eth->ether_shost[3], eth->ether_shost[4], eth->ether_shost[5]);
+  gtk_button_set_label(eth_sourcemacbutton, label);
+
+  // source mac
+  sprintf(label, "Type (0x%04x)", htons(eth->ether_type));
+  gtk_button_set_label(eth_typebutton, label);
+
+  // IPV4
   ip = (struct ipv4_header*)(packet + SIZE_ETHERNET);
 
   // read and set ip version field
@@ -222,12 +243,12 @@ void display_packet(GtkWidget *widget, gpointer data) {
 
   // read and set ip ecn field
   ipv4_ecn = ip->ip_tos & 0x03;
-//  sprintf(label, "ECN (0x%02x)", ipv4_ecn);
-  sprintf(label, "<span size='7000'>ECN (0x%02x)</span>", ipv4_ecn);
-  GtkWidget *test = gtk_label_new(NULL);
-  gtk_label_set_markup(GTK_LABEL(test), label);
-  gtk_button_set_label(ipv4_ecnbutton, NULL);
-  gtk_button_set_image(ipv4_ecnbutton, test);
+  sprintf(label, "ECN\n(0x%02x)", ipv4_ecn);
+//  sprintf(label, "<span size='7000'>ECN (0x%02x)</span>", ipv4_ecn);
+//  GtkWidget *test = gtk_label_new(NULL);
+//  gtk_label_set_markup(GTK_LABEL(test), label);
+  gtk_button_set_label(ipv4_ecnbutton, label);
+//  gtk_button_set_image(ipv4_ecnbutton, test);
 
   // read and set total length of ip header
   sprintf(label, "Total Length (%u)", htons(ip->ip_len));
@@ -380,6 +401,11 @@ int main (int argc, char *argv[]) {
   // init packet tree view (database representation)
   packettreeview = GTK_TREE_VIEW(gtk_builder_get_object (builder, "packettreeview"));
   g_signal_connect (packettreeview, "cursor-changed", G_CALLBACK(display_packet), NULL);
+
+  // init ethernet header buttons
+  eth_destmacbutton = GTK_BUTTON(gtk_builder_get_object (builder, "eth_destmacbutton"));
+  eth_sourcemacbutton = GTK_BUTTON(gtk_builder_get_object (builder, "eth_sourcemacbutton"));
+  eth_typebutton = GTK_BUTTON(gtk_builder_get_object (builder, "eth_typebutton"));
 
   // init IP header buttons
   ipv4_versionbutton = GTK_BUTTON(gtk_builder_get_object (builder, "ipv4_versionbutton"));
