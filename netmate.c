@@ -414,6 +414,57 @@ void openpcapfile(GtkWidget *widget, gpointer data) {
   gtk_widget_destroy(GTK_WIDGET(fileopendialog));
 }
 
+void getinfo(pcap_t *handler, const u_char *packet, char **source, char **destination) {
+  struct ether_header *eth;
+  struct iphdr *ipv4;                   // ipv4_header pointer
+  struct sll_header *sll;               // sll header (linux cooked)
+  unsigned short layer3 = 0;
+  void *layer3ptr = NULL;
+
+  *source = malloc(100);
+  *destination = malloc(100);
+  memset(*source, 0, 100);
+  memset(*destination, 0, 100);
+
+  switch (pcap_datalink(handler)) {
+
+    case DLT_EN10MB:
+      // set pointer to ethernet header
+      eth = (struct ether_header*)(packet);
+
+      sprintf(*source, "%02x:%02x:%02x:%02x:%02x:%02x", eth->ether_shost[0], eth->ether_shost[1], eth->ether_shost[2], eth->ether_shost[3], eth->ether_shost[4], eth->ether_shost[5]);
+      sprintf(*destination, "%02x:%02x:%02x:%02x:%02x:%02x", eth->ether_dhost[0], eth->ether_dhost[1], eth->ether_dhost[2], eth->ether_dhost[3], eth->ether_dhost[4], eth->ether_dhost[5]);
+
+      layer3 = htons(eth->ether_type);
+      layer3ptr = (void*)(packet + sizeof(struct ether_header));
+
+      break;
+    case LINKTYPE_LINUX_SLL:
+      // LINUX COOKED
+      sll = (struct sll_header*)(packet);
+
+      // TODO: need to check sll->halen to get REAL size (6 chosen here)
+      sprintf(*source, "%02x:%02x:%02x:%02x:%02x:%02x", sll->sll_addr[0], sll->sll_addr[1], sll->sll_addr[2], sll->sll_addr[3], sll->sll_addr[4], sll->sll_addr[5]);
+      // destination is unknown in SLL
+
+      layer3 = htons(sll->sll_protocol);
+      layer3ptr = (void*)(packet + sizeof(struct sll_header));
+
+      break;
+  }
+
+  switch (layer3) {
+    case ETHERTYPE_IP:
+      // IPV4
+      ipv4 = (struct iphdr*)layer3ptr;
+
+      sprintf(*source, "%u.%u.%u.%u", ipv4->saddr & 0xff, (ipv4->saddr >> 8) & 0xff, (ipv4->saddr >> 16) & 0xff, (ipv4->saddr >> 24) & 0xff);
+      sprintf(*destination, "%u.%u.%u.%u", ipv4->daddr & 0xff, (ipv4->daddr >> 8) & 0xff, (ipv4->daddr >> 16) & 0xff, (ipv4->daddr >> 24) & 0xff);
+
+      break;
+  }
+}
+
 void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore) {
   GtkTreeIter iter;             	// iterator for filling tree view
   char errbuf[PCAP_ERRBUF_SIZE];	// pcap error buffer
@@ -450,6 +501,8 @@ void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore) {
   long realtime;
   long realutime;
   char *pcaptime = malloc(20);
+  char *source;
+  char *destination;
 
   // read packets from file and fill tree view
   i = 1;
@@ -467,12 +520,15 @@ void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore) {
     }
 
     sprintf(pcaptime, "%ld.%06ld", realtime, realutime);
+    getinfo(handler, packet, &source, &destination);
 
     // insert new row into tree view
-    gtk_list_store_insert_with_values(packetliststore, &iter, -1, 0,  i++, 1, pcaptime, -1);
+    gtk_list_store_insert_with_values(packetliststore, &iter, -1, 0,  i++, 1, pcaptime, 2, source, 3, destination, -1);
   }
 
   free(pcaptime);
+  free(source);
+  free(destination);
 
   // close pcap handler
   pcap_close(handler);
