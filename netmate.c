@@ -190,6 +190,7 @@ void display_packet(GtkWidget *widget, gpointer data) {
   // this might also be done by preloading of this technique is too slow
   while (i++ <= packetnumber) pcap_next_ex(handler, &header, &packet);
 
+  // remember tab position and hide all tabs
   int pos;
   pos = gtk_notebook_get_current_page(protocolheadernotebook);
   gtk_widget_hide(GTK_WIDGET(ethernetgrid));
@@ -281,10 +282,14 @@ void display_packet(GtkWidget *widget, gpointer data) {
   // free memory of label
   free(label);
 
+  // redraw all tabs
   gtk_widget_show_all(GTK_WIDGET(ethernetgrid));
   gtk_widget_show_all(GTK_WIDGET(ipv4grid));
 
-  gtk_notebook_set_current_page(protocolheadernotebook, pos);
+  // switch to tab that was former selected
+  if ((pos >= 0) && (pos < gtk_notebook_get_n_pages(protocolheadernotebook))) {
+    gtk_notebook_set_current_page(protocolheadernotebook, pos);
+  }
 
   // close pcap handler
   pcap_close(handler);
