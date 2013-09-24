@@ -278,8 +278,6 @@ GtkGrid *ipv4_grid(struct iphdr *ipv4) {
   GtkGrid *grid;
   int x;
   char *label;		// label of buttons to set
-  char ipv4_version;			// ip version
-  char ipv4_headerlength;		// ip header length
   char ipv4_dscp;			// ip dscp field
   char ipv4_ecn;			// ip ecn field
   char ipv4_flags;			// ip header flags
@@ -298,13 +296,11 @@ GtkGrid *ipv4_grid(struct iphdr *ipv4) {
   }
 
   // read and set ip version field
-  ipv4_version = ipv4->version;
-  sprintf(label, "Version (%u)", ipv4_version);
+  sprintf(label, "Version (%u)", ipv4->version);
   gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 1, 4, 1);
 
   // read and set ip header length (<< 2 to calculate real size)
-  ipv4_headerlength = ipv4->ihl;
-  sprintf(label, "IHL (0x%02x)", ipv4_headerlength);
+  sprintf(label, "IHL (0x%02x)", ipv4->ihl);
   gtk_grid_attach(grid, gtk_button_new_with_label(label), 4, 1, 4, 1);
 
   // read and set ip dscp field
