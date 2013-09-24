@@ -138,7 +138,7 @@ gint show_question(GtkWidget *widget, gpointer message) {
 
 GtkGrid *sll_grid(struct sll_header *sll) {
   GtkGrid *grid;
-  int x;
+  int x, y;
   char *label;		// label of buttons to set
 
   grid = GTK_GRID(gtk_grid_new());
@@ -153,22 +153,23 @@ GtkGrid *sll_grid(struct sll_header *sll) {
     gtk_grid_attach(grid, gtk_label_new(label), x, 0, 1, 1);
   }
 
+  x=0;
+  y=1;
+
   sprintf(label, "Packet Type: %u", htons(sll->sll_pkttype));
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 1, 16, 1);
+  append_field(grid, &x, &y, sizeof(sll->sll_pkttype)*8, label);
 
   sprintf(label, "ARPHDR_ Type: %u", htons(sll->sll_hatype));
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 1, 16, 1);
+  append_field(grid, &x, &y, sizeof(sll->sll_hatype)*8, label);
 
   sprintf(label, "Link-layer Address Length: %u", htons(sll->sll_halen));
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 2, 16, 1);
+  append_field(grid, &x, &y, sizeof(sll->sll_halen)*8, label);
 
   sprintf(label, "Link-layer Address: %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x", sll->sll_addr[0], sll->sll_addr[1], sll->sll_addr[2], sll->sll_addr[3], sll->sll_addr[4], sll->sll_addr[5], sll->sll_addr[6], sll->sll_addr[7]);
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 2, 16, 1);
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 3, 32, 1);
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 4, 16, 1);
+  append_field(grid, &x, &y, sizeof(sll->sll_addr)*8, label);
 
   sprintf(label, "Protocol Type: 0x%04x", htons(sll->sll_protocol));
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 4, 16, 1);
+  append_field(grid, &x, &y, sizeof(sll->sll_protocol)*8, label);
 
   // free memory of label
   free(label);
@@ -181,7 +182,7 @@ GtkGrid *sll_grid(struct sll_header *sll) {
 
 GtkGrid *ethernet_grid(struct ether_header *eth) {
   GtkGrid *grid;
-  int x;
+  int x, y;
   char *label;		// label of buttons to set
 
   grid = GTK_GRID(gtk_grid_new());
@@ -196,19 +197,20 @@ GtkGrid *ethernet_grid(struct ether_header *eth) {
     gtk_grid_attach(grid, gtk_label_new(label), x, 0, 1, 1);
   }
 
+  x=0;
+  y=1;
+
   // destination mac
   sprintf(label, "Destination: %02x:%02x:%02x:%02x:%02x:%02x", eth->ether_dhost[0], eth->ether_dhost[1], eth->ether_dhost[2], eth->ether_dhost[3], eth->ether_dhost[4], eth->ether_dhost[5]);
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 1, 32, 1);
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 2, 16, 1);
+  append_field(grid, &x, &y, sizeof(eth->ether_dhost)*8, label);
 
   // source mac
   sprintf(label, "Source: %02x:%02x:%02x:%02x:%02x:%02x", eth->ether_shost[0], eth->ether_shost[1], eth->ether_shost[2], eth->ether_shost[3], eth->ether_shost[4], eth->ether_shost[5]);
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 2, 16, 1);
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 3, 32, 1);
+  append_field(grid, &x, &y, sizeof(eth->ether_shost)*8, label);
 
   // upper layer protocol
-  sprintf(label, "Type:\n0x%04x", htons(eth->ether_type));
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 4, 2, 1);
+  sprintf(label, "Type: 0x%04x", htons(eth->ether_type));
+  append_field(grid, &x, &y, sizeof(eth->ether_type)*8, label);
 
   // free memory of label
   free(label);
@@ -221,7 +223,7 @@ GtkGrid *ethernet_grid(struct ether_header *eth) {
 
 GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
   GtkGrid *grid;
-  int x;
+  int x,y;
   char *label;		// label of buttons to set
   char ipv4_dscp;			// ip dscp field
   char ipv4_ecn;			// ip ecn field
@@ -239,23 +241,26 @@ GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
     gtk_grid_attach(grid, gtk_label_new(label), x, 0, 1, 1);
   }
 
+  x=0;
+  y=1;
+
   // read and set ip version field
   sprintf(label, "Version: %u", ipv4->version);
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 1, 4, 1);
+  append_field(grid, &x, &y, 4, label);
 
   // read and set ip header length (<< 2 to calculate real size)
   sprintf(label, "IHL: %u (%u bytes)", ipv4->ihl, ipv4->ihl*4);
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 4, 1, 4, 1);
+  append_field(grid, &x, &y, 4, label);
 
   // read and set ip dscp field
   ipv4_dscp = ipv4->tos >> 2;
   sprintf(label, "DSCP: 0x%02x", ipv4_dscp);
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 8, 1, 6, 1);
+  append_field(grid, &x, &y, 6, label);
 
   // read and set ip ecn field
   ipv4_ecn = ipv4->tos & 0x03;
   sprintf(label, "ECN:\n0x%02x", ipv4_ecn);
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 14, 1, 2, 1);
+  append_field(grid, &x, &y, 2, label);
 //  sprintf(label, "<span size='7000'>ECN (0x%02x)</span>", ipv4_ecn);
 //  GtkWidget *test = gtk_label_new(NULL);
 //  gtk_label_set_markup(GTK_LABEL(test), label);
@@ -263,61 +268,59 @@ GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
 
   // read and set total length of ip header
   sprintf(label, "Total Length: %u", htons(ipv4->tot_len));
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 1, 16, 1);
+  append_field(grid, &x, &y, sizeof(ipv4->tot_len)*8, label);
 
   // read and set identification field of ip packet
   sprintf(label, "Identification: 0x%04x", htons(ipv4->id));
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 2, 16, 1);
+  append_field(grid, &x, &y, sizeof(ipv4->id)*8, label);
 
   // reserved flag
   if (ipv4->frag_off & htons(IP_RF)) {
-    gtk_grid_attach(grid, gtk_button_new_with_label("RF"), 16, 2, 1, 1);
+    append_field(grid, &x, &y, 1, "RF");
   } else {
-    gtk_grid_attach(grid, gtk_button_new_with_label("rf"), 16, 2, 1, 1);
+    append_field(grid, &x, &y, 1, "rf");
   }
 
   // dont fragment flag
   if (ipv4->frag_off & htons(IP_DF)) {
-    gtk_grid_attach(grid, gtk_button_new_with_label("DF"), 17, 2, 1, 1);
+    append_field(grid, &x, &y, 1, "DF");
   } else {
-    gtk_grid_attach(grid, gtk_button_new_with_label("df"), 17, 2, 1, 1);
+    append_field(grid, &x, &y, 1, "df");
   }
 
   // more fragments flag
   if (ipv4->frag_off & htons(IP_MF)) {
-    gtk_grid_attach(grid, gtk_button_new_with_label("MF"), 18, 2, 1, 1);
+    append_field(grid, &x, &y, 1, "MF");
   } else {
-    gtk_grid_attach(grid, gtk_button_new_with_label("mf"), 18, 2, 1, 1);
+    append_field(grid, &x, &y, 1, "mf");
   }
 
   // read and set ip fragmentation offset (<< 3 to calculate real size);
   ipv4_offset = (htons(ipv4->frag_off) & IP_OFFMASK);
   sprintf(label, "Fragment Offset: %u (%u bytes)", ipv4_offset, ipv4_offset << 3);
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 19, 2, 13, 1);
+  append_field(grid, &x, &y, 13, label);
 
   // read and set time to live of ip packet
   sprintf(label, "Time To Live: %u", ipv4->ttl);
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 3, 8, 1);
+  append_field(grid, &x, &y, sizeof(ipv4->ttl)*8, label);
 
   // read an d set upper layer protocol
   sprintf(label, "Protocol: %u", ipv4->protocol);
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 8, 3, 8, 1);
+  append_field(grid, &x, &y, sizeof(ipv4->protocol)*8, label);
 
   // read and set ip header checksum
   sprintf(label, "Header checksum: 0x%04x", htons(ipv4->check));
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 3, 16, 1);
+  append_field(grid, &x, &y, sizeof(ipv4->check)*8, label);
 
   // read and set ip source address
   sprintf(label, "Source IP Address: %u.%u.%u.%u", ipv4->saddr & 0xff, (ipv4->saddr >> 8) & 0xff, (ipv4->saddr >> 16) & 0xff, (ipv4->saddr >> 24) & 0xff);
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 4, 32, 1);
+  append_field(grid, &x, &y, sizeof(ipv4->saddr)*8, label);
 
   // read and set ip destination address
   sprintf(label, "Destination IP Address: %u.%u.%u.%u", ipv4->daddr & 0xff, (ipv4->daddr >> 8) & 0xff, (ipv4->daddr >> 16) & 0xff, (ipv4->daddr >> 24) & 0xff);
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 5, 32, 1);
+  append_field(grid, &x, &y, sizeof(ipv4->daddr)*8, label);
 
-  int y = 6;
   int left = (ipv4->ihl-0x05)*4;
-  x = 0;
   int optlen;
   int opttype;
   int i;
@@ -367,7 +370,7 @@ GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
 
 GtkGrid *tcp_grid(struct tcphdr *tcp, u_char *options) {
   GtkGrid *grid;
-  int x;
+  int x,y;
   char *label;		// label of buttons to set
 
   grid = GTK_GRID(gtk_grid_new());
@@ -382,113 +385,114 @@ GtkGrid *tcp_grid(struct tcphdr *tcp, u_char *options) {
     gtk_grid_attach(grid, gtk_label_new(label), x, 0, 1, 1);
   }
 
+  x=0;
+  y=1;
+
   sprintf(label, "Source Port: %u", htons(tcp->source));
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 1, 16, 1);
+  append_field(grid, &x, &y, sizeof(tcp->source)*8, label);
 
   sprintf(label, "Destination Port: %u", htons(tcp->dest));
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 1, 16, 1);
+  append_field(grid, &x, &y, sizeof(tcp->dest)*8, label);
 
   sprintf(label, "Sequence Number: %u", htonl(tcp->seq));
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 2, 32, 1);
+  append_field(grid, &x, &y, sizeof(tcp->seq)*8, label);
 
   sprintf(label, "Acknowledgement Number: %u", htonl(tcp->ack_seq));
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 3, 32, 1);
+  append_field(grid, &x, &y, sizeof(tcp->ack_seq)*8, label);
 
   sprintf(label, "Data Offset: %u (%u bytes)", tcp->doff, tcp->doff*4);
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 4, 4, 1);
+  append_field(grid, &x, &y, 4, label);
 
   // reserved (000)
   if (tcp->res1 & 0x08) {
-    gtk_grid_attach(grid, gtk_button_new_with_label("R"), 4, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "R");
   } else {
-    gtk_grid_attach(grid, gtk_button_new_with_label("r"), 4, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "r");
   }
   if (tcp->res1 & 0x04) {
-    gtk_grid_attach(grid, gtk_button_new_with_label("R"), 5, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "R");
   } else {
-    gtk_grid_attach(grid, gtk_button_new_with_label("r"), 5, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "r");
   }
   if (tcp->res1 & 0x02) {
-    gtk_grid_attach(grid, gtk_button_new_with_label("R"), 6, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "R");
   } else {
-    gtk_grid_attach(grid, gtk_button_new_with_label("r"), 6, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "r");
   }
 
   // NS
   if (tcp->res1 & 0x01) {
-    gtk_grid_attach(grid, gtk_button_new_with_label("NS"), 7, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "NS");
   } else {
-    gtk_grid_attach(grid, gtk_button_new_with_label("ns"), 7, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "ns");
   }
 
   // CWR
   if (tcp->res2 & 0x02) {
-    gtk_grid_attach(grid, gtk_button_new_with_label("CWR"), 8, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "CWR");
   } else {
-    gtk_grid_attach(grid, gtk_button_new_with_label("cwr"), 8, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "cwr");
   }
 
   // ECE
   if (tcp->res2 & 0x01) {
-    gtk_grid_attach(grid, gtk_button_new_with_label("ECE"), 9, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "ECE");
   } else {
-    gtk_grid_attach(grid, gtk_button_new_with_label("ece"), 9, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "ece");
   }
 
   // URG
   if (tcp->urg) {
-    gtk_grid_attach(grid, gtk_button_new_with_label("URG"), 10, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "URG");
   } else {
-    gtk_grid_attach(grid, gtk_button_new_with_label("urg"), 10, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "urg");
   }
 
   // ACK
   if (tcp->ack) {
-    gtk_grid_attach(grid, gtk_button_new_with_label("ACK"), 11, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "ACK");
   } else {
-    gtk_grid_attach(grid, gtk_button_new_with_label("ack"), 11, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "ack");
   }
 
   // PSH
   if (tcp->psh) {
-    gtk_grid_attach(grid, gtk_button_new_with_label("PSH"), 12, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "PSH");
   } else {
-    gtk_grid_attach(grid, gtk_button_new_with_label("psh"), 12, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "psh");
   }
 
   // RST
   if (tcp->rst) {
-    gtk_grid_attach(grid, gtk_button_new_with_label("RST"), 13, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "RST");
   } else {
-    gtk_grid_attach(grid, gtk_button_new_with_label("rst"), 13, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "rst");
   }
 
   // SYN
   if (tcp->syn) {
-    gtk_grid_attach(grid, gtk_button_new_with_label("SYN"), 14, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "SYN");
   } else {
-    gtk_grid_attach(grid, gtk_button_new_with_label("syn"), 14, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "syn");
   }
 
   // FIN
   if (tcp->fin) {
-    gtk_grid_attach(grid, gtk_button_new_with_label("FIN"), 15, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "FIN");
   } else {
-    gtk_grid_attach(grid, gtk_button_new_with_label("fin"), 15, 4, 1, 1);
+    append_field(grid, &x, &y, 1, "fin");
   }
 
   sprintf(label, "Window Size: %u", htons(tcp->window));
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 4, 16, 1);
+  append_field(grid, &x, &y, sizeof(tcp->window)*8, label);
 
   sprintf(label, "Checksum: 0x%04x", htons(tcp->check));
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 5, 16, 1);
+  append_field(grid, &x, &y, sizeof(tcp->check)*8, label);
 
   sprintf(label, "Urgent Pointer: %u", htons(tcp->urg_ptr));
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 5, 16, 1);
+  append_field(grid, &x, &y, sizeof(tcp->urg_ptr)*8, label);
 
-  int y = 6;
   int left = (tcp->doff-0x05)*4;
-  x = 0;
   int optlen;
   int opttype;
   int i;
