@@ -305,6 +305,7 @@ GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
   x = 0;
   int optlen;
   int opttype;
+  int i;
   char *optdata;
   while (left > 0) {
     opttype = options[0];
@@ -316,9 +317,14 @@ GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
     sprintf(label, "Opt. Len (0x%02x)", optlen);
     append_field(grid, &x, &y, 8, label);
 
-    optdata = malloc(optlen-2);
-    memcpy(options+2, optdata, optlen-2);
-    sprintf(label, "Opt. Data XXX");
+    optdata = malloc(optlen*2);
+
+    for (i=0; i<optlen-2; ++i)
+      sprintf(&optdata[i*2], "%02x", (unsigned int)options[i+2]);
+
+    optdata[optlen] = 0x00;
+    sprintf(label, "Opt. Data 0x%s", optdata);
+
     append_field(grid, &x, &y, (optlen-2)*8, label);
     free(optdata);
 
@@ -400,6 +406,7 @@ GtkGrid *tcp_grid(struct tcphdr *tcp, u_char *options) {
   x = 0;
   int optlen;
   int opttype;
+  int i;
   char *optdata;
   while (left > 0) {
     opttype = options[0];
@@ -420,9 +427,14 @@ GtkGrid *tcp_grid(struct tcphdr *tcp, u_char *options) {
 
       if (optlen > 2) {
 
-        optdata = malloc(optlen-2);
-        memcpy(options+2, optdata, optlen-2);
-        sprintf(label, "Opt. Data XXX");
+        optdata = malloc(optlen*2);
+
+        for (i=0; i<optlen-2; ++i)
+          sprintf(&optdata[i*2], "%02x", (unsigned int)options[i+2]);
+
+        optdata[optlen] = 0x00;
+        sprintf(label, "Opt. Data 0x%s", optdata);
+
         append_field(grid, &x, &y, (optlen-2)*8, label);
         free(optdata);
       }
