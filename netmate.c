@@ -14,7 +14,7 @@
 #endif
 
 // THE VERSION OF NETMATE
-#define VERSION "0.11"
+#define VERSION "0.12"
 
 // ADDITIONAL LINK TYPES
 #define LINKTYPE_LINUX_SLL 113
@@ -27,7 +27,6 @@ char *filename = NULL;
 GtkNotebook *protocolheadernotebook;
 
 // layer2
-GtkGrid *ethernetgrid;
 GtkGrid *sllgrid;
 
 // layer3
@@ -35,13 +34,6 @@ GtkGrid *ipv4grid;
 
 // layer4
 GtkGrid *tcpgrid;
-
-// global ethernet buttons
-GtkButton *eth_destmacbutton;
-GtkButton *eth_destmacbutton2;
-GtkButton *eth_sourcemacbutton;
-GtkButton *eth_sourcemacbutton2;
-GtkButton *eth_typebutton;
 
 // global sll buttons
 GtkButton *sll_packetbutton;
@@ -187,33 +179,6 @@ gint show_question(GtkWidget *widget, gpointer message) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void fill_ethernet(struct ether_header *eth) {
-  char *label;		// label of buttons to set
-
-  // allocate memory for button label
-  label = malloc(100);
-
-  // destination mac
-  sprintf(label, "Destination (%02x:%02x:%02x:%02x:%02x:%02x)", eth->ether_dhost[0], eth->ether_dhost[1], eth->ether_dhost[2], eth->ether_dhost[3], eth->ether_dhost[4], eth->ether_dhost[5]);
-  gtk_button_set_label(eth_destmacbutton, label);
-  gtk_button_set_label(eth_destmacbutton2, label);
-
-  // source mac
-  sprintf(label, "Source (%02x:%02x:%02x:%02x:%02x:%02x)", eth->ether_shost[0], eth->ether_shost[1], eth->ether_shost[2], eth->ether_shost[3], eth->ether_shost[4], eth->ether_shost[5]);
-  gtk_button_set_label(eth_sourcemacbutton, label);
-  gtk_button_set_label(eth_sourcemacbutton2, label);
-
-  // source mac
-  sprintf(label, "Type\n(0x%04x)", htons(eth->ether_type));
-  gtk_button_set_label(eth_typebutton, label);
-
-  // free memory of label
-  free(label);
-
-  // show ethernet grid (tab)
-  gtk_widget_show_all(GTK_WIDGET(ethernetgrid));
-}
 
 void fill_sll(struct sll_header *sll) {
   char *label;		// label of buttons to set
@@ -369,6 +334,46 @@ void fill_tcp(struct tcphdr *tcp) {
   gtk_widget_show_all(GTK_WIDGET(tcpgrid));
 }
 
+GtkGrid *ethernet_grid(struct ether_header *eth) {
+  GtkGrid *grid;
+  int x;
+  char *label;		// label of buttons to set
+
+  grid = GTK_GRID(gtk_grid_new());
+
+  gtk_grid_set_column_homogeneous(grid, TRUE);
+
+  // allocate memory for button label
+  label = malloc(100);
+
+  for (x=0; x<32; x++) {
+    sprintf(label, "%u", x);
+    gtk_grid_attach(grid, gtk_label_new(label), x, 0, 1, 1);
+  }
+
+  // destination mac
+  sprintf(label, "Destination (%02x:%02x:%02x:%02x:%02x:%02x)", eth->ether_dhost[0], eth->ether_dhost[1], eth->ether_dhost[2], eth->ether_dhost[3], eth->ether_dhost[4], eth->ether_dhost[5]);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 1, 32, 1);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 2, 16, 1);
+
+  // source mac
+  sprintf(label, "Source (%02x:%02x:%02x:%02x:%02x:%02x)", eth->ether_shost[0], eth->ether_shost[1], eth->ether_shost[2], eth->ether_shost[3], eth->ether_shost[4], eth->ether_shost[5]);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 2, 16, 1);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 3, 32, 1);
+
+  // upper layer protocol
+  sprintf(label, "Type\n(0x%04x)", htons(eth->ether_type));
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 4, 2, 1);
+
+  // free memory of label
+  free(label);
+
+  // show ethernet grid (tab)
+  gtk_widget_show_all(GTK_WIDGET(grid));
+
+  return(grid);
+}
+
 void display_packet(GtkWidget *widget, gpointer data) {
   GtkTreeSelection *selection;		// tree selection
   GtkTreeModel     *model;		// tree model
@@ -405,7 +410,6 @@ void display_packet(GtkWidget *widget, gpointer data) {
   // remember tab position and hide all tabs
   int pos;
   pos = gtk_notebook_get_current_page(protocolheadernotebook);
-  gtk_widget_hide(GTK_WIDGET(ethernetgrid));
   gtk_widget_hide(GTK_WIDGET(sllgrid));
   gtk_widget_hide(GTK_WIDGET(ipv4grid));
   gtk_widget_hide(GTK_WIDGET(tcpgrid));
@@ -417,7 +421,7 @@ void display_packet(GtkWidget *widget, gpointer data) {
       eth = (struct ether_header*)(packet);
 
       // display ethernet tab
-      fill_ethernet(eth);
+      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(ethernet_grid(eth)), gtk_label_new("Ethernet"));
 
       layer3 = htons(eth->ether_type);
       layer3ptr = (void*)(packet + sizeof(struct ether_header));
@@ -550,7 +554,6 @@ void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore) {
   // clear all items
   gtk_list_store_clear(packetliststore);
 
-  gtk_widget_hide(GTK_WIDGET(ethernetgrid));
   gtk_widget_hide(GTK_WIDGET(sllgrid));
   gtk_widget_hide(GTK_WIDGET(ipv4grid));
   gtk_widget_hide(GTK_WIDGET(tcpgrid));
@@ -651,17 +654,9 @@ int main (int argc, char *argv[]) {
   g_signal_connect (packettreeview, "cursor-changed", G_CALLBACK(display_packet), NULL);
 
   // init grids
-  ethernetgrid = GTK_GRID(gtk_builder_get_object (builder, "ethernetgrid"));
   sllgrid = GTK_GRID(gtk_builder_get_object (builder, "sllgrid"));
   ipv4grid = GTK_GRID(gtk_builder_get_object (builder, "ipv4grid"));
   tcpgrid = GTK_GRID(gtk_builder_get_object (builder, "tcpgrid"));
-
-  // init ethernet header buttons
-  eth_destmacbutton = GTK_BUTTON(gtk_builder_get_object (builder, "eth_destmacbutton"));
-  eth_destmacbutton2 = GTK_BUTTON(gtk_builder_get_object (builder, "eth_destmacbutton2"));
-  eth_sourcemacbutton = GTK_BUTTON(gtk_builder_get_object (builder, "eth_sourcemacbutton"));
-  eth_sourcemacbutton2 = GTK_BUTTON(gtk_builder_get_object (builder, "eth_sourcemacbutton2"));
-  eth_typebutton = GTK_BUTTON(gtk_builder_get_object (builder, "eth_typebutton"));
 
   // init sll header buttons
   sll_packetbutton = GTK_BUTTON(gtk_builder_get_object (builder, "sll_packetbutton"));
