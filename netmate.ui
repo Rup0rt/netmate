@@ -19,6 +19,7 @@
             <property name="can_focus">False</property>
             <child>
               <object class="GtkMenuItem" id="filemenuitem">
+                <property name="use_action_appearance">False</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">_File</property>
@@ -30,6 +31,7 @@
                     <child>
                       <object class="GtkImageMenuItem" id="openimagemenuitem">
                         <property name="label">gtk-open</property>
+                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
@@ -45,6 +47,7 @@
                     <child>
                       <object class="GtkImageMenuItem" id="quitimagemenuitem">
                         <property name="label">gtk-quit</property>
+                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
@@ -593,9 +596,16 @@
                 <child>
                   <object class="GtkButton" id="eth_destmacbutton">
                     <property name="label" translatable="yes">Destination</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Destination
+
+The destination MAC address.
+
+[IEEE802.3]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -607,9 +617,16 @@
                 <child>
                   <object class="GtkButton" id="eth_destmacbutton2">
                     <property name="label" translatable="yes">Destination</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Destination
+
+The destination MAC address.
+
+[IEEE802.3]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -621,9 +638,16 @@
                 <child>
                   <object class="GtkButton" id="eth_sourcemacbutton">
                     <property name="label" translatable="yes">Source</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Source
+
+The source MAC address.
+
+[IEEE802.3]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">16</property>
@@ -635,9 +659,16 @@
                 <child>
                   <object class="GtkButton" id="eth_sourcemacbutton2">
                     <property name="label" translatable="yes">Source</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Source
+
+The source MAC address.
+
+[IEEE802.3]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -649,9 +680,16 @@
                 <child>
                   <object class="GtkButton" id="eth_typebutton">
                     <property name="label" translatable="yes">Type</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">EtherType or length
+
+This two-octet field can be used for two different purposes. Values of 1500 (0x05DC) and below indicate that it is used as the size of the payload in octets while values of 1536 (0x0600) and above indicate that it is used to represent EtherType. EtherType is used to indicate which protocol is encapsulated in the payload of an Ethernet Frame.
+
+[IEEE802.3]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -1217,6 +1255,7 @@
                 <child>
                   <object class="GtkButton" id="sll_packetbutton">
                     <property name="label" translatable="yes">Packet Type</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -1228,6 +1267,7 @@
     3, if the packet was sent to somebody else by somebody else;
     4, if the packet was sent by us.
 </property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -1239,12 +1279,14 @@
                 <child>
                   <object class="GtkButton" id="sll_arphdrbutton">
                     <property name="label" translatable="yes">ARPHRD_ Type</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="tooltip_text" translatable="yes">ARPHDR_ Type
 
 contains a Linux ARPHRD_ value for the link-layer device type. </property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">16</property>
@@ -1256,9 +1298,11 @@ contains a Linux ARPHRD_ value for the link-layer device type. </property>
                 <child>
                   <object class="GtkButton" id="sll_lengthbutton">
                     <property name="label" translatable="yes">Link-layer Address Length</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -1270,12 +1314,14 @@ contains a Linux ARPHRD_ value for the link-layer device type. </property>
                 <child>
                   <object class="GtkButton" id="sll_addressbutton">
                     <property name="label" translatable="yes">Link-layer Address</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="tooltip_text" translatable="yes">Link-layer Address Length
 
 contains the length of the link-layer address of the sender of the packet. That length could be zero. </property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">16</property>
@@ -1287,9 +1333,14 @@ contains the length of the link-layer address of the sender of the packet. That 
                 <child>
                   <object class="GtkButton" id="sll_addressbutton2">
                     <property name="label" translatable="yes">Link-layer Address</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Link-layer Address Length
+
+contains the length of the link-layer address of the sender of the packet. That length could be zero. </property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -1301,9 +1352,14 @@ contains the length of the link-layer address of the sender of the packet. That 
                 <child>
                   <object class="GtkButton" id="sll_addressbutton3">
                     <property name="label" translatable="yes">Link-layer Address</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Link-layer Address Length
+
+contains the length of the link-layer address of the sender of the packet. That length could be zero. </property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -1315,9 +1371,17 @@ contains the length of the link-layer address of the sender of the packet. That 
                 <child>
                   <object class="GtkButton" id="sll_protocolbutton">
                     <property name="label" translatable="yes">Protocol Type</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Protocol Type
+
+The protocol type field is in network byte order; it contains an Ethernet protocol type, or one of:
+
+    1, if the frame is a Novell 802.3 frame without an 802.2 LLC header;
+    4, if the frame begins with an 802.2 LLC header.</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">16</property>
@@ -1348,6 +1412,7 @@ contains the length of the link-layer address of the sender of the packet. That 
                 <child>
                   <object class="GtkButton" id="ipv4_versionbutton">
                     <property name="label" translatable="yes">Version</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -1356,6 +1421,7 @@ contains the length of the link-layer address of the sender of the packet. That 
 The Version field indicates the format of the internet header.
 
 [RFC791]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -1367,6 +1433,7 @@ The Version field indicates the format of the internet header.
                 <child>
                   <object class="GtkButton" id="ipv4_ihlbutton">
                     <property name="label" translatable="yes">IHL</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -1375,6 +1442,7 @@ The Version field indicates the format of the internet header.
 Internet Header Length is the length of the internet header in 32 bit words, and thus points to the beginning of the data.  Note that the minimum value for a correct header is 5.
 
 [RFC791]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">4</property>
@@ -1386,6 +1454,7 @@ Internet Header Length is the length of the internet header in 32 bit words, and
                 <child>
                   <object class="GtkButton" id="ipv4_dscpbutton">
                     <property name="label" translatable="yes">DSCP</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -1394,6 +1463,7 @@ Internet Header Length is the length of the internet header in 32 bit words, and
 A replacement header field, called the DS field, is defined, which is intended to supersede the existing definitions of the IPv4 TOS octet [RFC791] and the IPv6 Traffic Class octet [IPv6].
 
 [RFC2474]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">8</property>
@@ -1405,6 +1475,7 @@ A replacement header field, called the DS field, is defined, which is intended t
                 <child>
                   <object class="GtkButton" id="ipv4_ecnbutton">
                     <property name="label" translatable="yes">ECN</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -1413,6 +1484,7 @@ A replacement header field, called the DS field, is defined, which is intended t
 This field allows end-to-end notification of network congestion without dropping packets. ECN is an optional feature that is only used when both endpoints support it and are willing to use it. It is only effective when supported by the underlying network.
 
 [RFC3168]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">14</property>
@@ -1424,6 +1496,7 @@ This field allows end-to-end notification of network congestion without dropping
                 <child>
                   <object class="GtkButton" id="ipv4_totallengthbutton">
                     <property name="label" translatable="yes">Total Length</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -1432,6 +1505,7 @@ This field allows end-to-end notification of network congestion without dropping
 Total Length is the length of the datagram, measured in octets, including internet header and data.  This field allows the length of a datagram to be up to 65,535 octets.
 
 [RFC791]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">16</property>
@@ -1443,6 +1517,7 @@ Total Length is the length of the datagram, measured in octets, including intern
                 <child>
                   <object class="GtkButton" id="ipv4_identificationbutton">
                     <property name="label" translatable="yes">Identification</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -1451,6 +1526,7 @@ Total Length is the length of the datagram, measured in octets, including intern
 An identifying value assigned by the sender to aid in assembling the fragments of a datagram.
 
 [RFC791]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -1462,6 +1538,7 @@ An identifying value assigned by the sender to aid in assembling the fragments o
                 <child>
                   <object class="GtkButton" id="ipv4_timetolivebutton">
                     <property name="label" translatable="yes">Time To Live</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -1470,6 +1547,7 @@ An identifying value assigned by the sender to aid in assembling the fragments o
 This field indicates the maximum time the datagram is allowed to remain in the internet system.  If this field contains the value zero, then the datagram must be destroyed.  This field is modified in internet header processing.  The time is measured in units of seconds, but since every module that processes a datagram must decrease the TTL by at least one even if it process the datagram in less than a second, the TTL must be thought of only as an upper bound on the time a datagram may exist.  The intention is to cause undeliverable datagrams to be discarded, and to bound the maximum datagram lifetime.
 
 [RFC791]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -1481,6 +1559,7 @@ This field indicates the maximum time the datagram is allowed to remain in the i
                 <child>
                   <object class="GtkButton" id="ipv4_protocolbutton">
                     <property name="label" translatable="yes">Protocol</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -1489,6 +1568,7 @@ This field indicates the maximum time the datagram is allowed to remain in the i
 This field indicates the next level protocol used in the data portion of the internet datagram.  The values for various protocols are specified in "Assigned Numbers".
 
 [RFC791]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">8</property>
@@ -1500,6 +1580,7 @@ This field indicates the next level protocol used in the data portion of the int
                 <child>
                   <object class="GtkButton" id="ipv4_sourceipaddressbutton">
                     <property name="label" translatable="yes">Source IP Address</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -1508,6 +1589,7 @@ This field indicates the next level protocol used in the data portion of the int
 The source address.
 
 [RFC791]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -1519,6 +1601,7 @@ The source address.
                 <child>
                   <object class="GtkButton" id="ipv4_destinationipaddressbutton">
                     <property name="label" translatable="yes">Destination IP Address</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -1527,6 +1610,7 @@ The source address.
 The destination address.
 
 [RFC791]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -1538,6 +1622,7 @@ The destination address.
                 <child>
                   <object class="GtkButton" id="ipv4_flagsbutton">
                     <property name="label" translatable="yes">Flags</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -1550,6 +1635,7 @@ Various Control Flags.
       Bit 2: (MF) 0 = Last Fragment, 1 = More Fragments.
 
 [RFC791]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">16</property>
@@ -1561,6 +1647,7 @@ Various Control Flags.
                 <child>
                   <object class="GtkButton" id="ipv4_fragmentoffsetbutton">
                     <property name="label" translatable="yes">Fragment Offset</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -1569,6 +1656,7 @@ Various Control Flags.
 This field indicates where in the datagram this fragment belongs. The fragment offset is measured in units of 8 octets (64 bits). The first fragment has offset zero.
 
 [RFC791]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">19</property>
@@ -1580,6 +1668,7 @@ This field indicates where in the datagram this fragment belongs. The fragment o
                 <child>
                   <object class="GtkButton" id="ipv4_headerchecksumbutton">
                     <property name="label" translatable="yes">Header Checksum</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -1588,6 +1677,7 @@ This field indicates where in the datagram this fragment belongs. The fragment o
 A checksum on the header only.  Since some header fields change (e.g., time to live), this is recomputed and verified at each point that the internet header is processed.
 
 [RFC791]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">16</property>
@@ -2515,9 +2605,16 @@ A checksum on the header only.  Since some header fields change (e.g., time to l
                 <child>
                   <object class="GtkButton" id="tcp_sourceportbutton">
                     <property name="label" translatable="yes">Source Port</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Source Port
+
+The source port number.
+
+[RFC793]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -2529,9 +2626,16 @@ A checksum on the header only.  Since some header fields change (e.g., time to l
                 <child>
                   <object class="GtkButton" id="tcp_seqnumbutton">
                     <property name="label" translatable="yes">Sequence Number</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Sequence Number
+
+The sequence number of the first data octet in this segment (except when SYN is present). If SYN is present the sequence number is the initial sequence number (ISN) and the first data octet is ISN+1.
+
+[RFC793]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -2543,9 +2647,16 @@ A checksum on the header only.  Since some header fields change (e.g., time to l
                 <child>
                   <object class="GtkButton" id="tcp_acknumbutton">
                     <property name="label" translatable="yes">Acknowledgement Number</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Acknowledgement Number
+
+If the ACK control bit is set this field contains the value of the next sequence number the sender of the segment is expecting to receive.  Once a connection is established this is always sent.
+
+[RFC793]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -2557,9 +2668,16 @@ A checksum on the header only.  Since some header fields change (e.g., time to l
                 <child>
                   <object class="GtkButton" id="tcp_offsetbutton">
                     <property name="label" translatable="yes">Data Offset</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Data Offset
+
+The number of 32 bit words in the TCP Header.  This indicates where the data begins.  The TCP header (even one including options) is an integral number of 32 bits long.
+
+[RFC793]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -2571,9 +2689,16 @@ A checksum on the header only.  Since some header fields change (e.g., time to l
                 <child>
                   <object class="GtkButton" id="tcp_destportbutton">
                     <property name="label" translatable="yes">Destination Port</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Destination Port
+
+The destination port number.
+
+[RFC793]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">16</property>
@@ -2585,9 +2710,16 @@ A checksum on the header only.  Since some header fields change (e.g., time to l
                 <child>
                   <object class="GtkButton" id="tcp_reservedbutton">
                     <property name="label" translatable="yes">Reserved</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Reserved
+
+Reserved for future use.  Must be zero.
+
+[RFC793]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">4</property>
@@ -2599,9 +2731,27 @@ A checksum on the header only.  Since some header fields change (e.g., time to l
                 <child>
                   <object class="GtkButton" id="tcp_flagsbutton">
                     <property name="label" translatable="yes">Flags</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Flags (Control Bits)
+
+NS: ECN-nonce concealment protection [RFC3540]
+CWR: Congestion Window Reduced (CWR) flag is set by the sending host to indicate that it
+          received a TCP segment with the ECE flag set and had responded in congestion
+          control mechanism [RFC3168]
+ECE: ECN-Echo indicates [RFC3168]
+        If the SYN flag is set (1), that the TCP peer is ECN capable.
+        If the SYN flag is clear (0), that a packet with Congestion
+        Experienced flag in IP header set is received during normal transmission
+URG:  Urgent Pointer field significant [RFC793]
+ACK:  Acknowledgment field significant [RFC793]
+PSH:  Push Function [RFC793]
+RST:  Reset the connection [RFC793]
+SYN:  Synchronize sequence numbers [RFC793]
+FIN:  No more data from sender [RFC793]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">7</property>
@@ -2613,9 +2763,16 @@ A checksum on the header only.  Since some header fields change (e.g., time to l
                 <child>
                   <object class="GtkButton" id="tcp_winsizebutton">
                     <property name="label" translatable="yes">Window Size</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Window Size
+
+The number of data octets beginning with the one indicated in the acknowledgment field which the sender of this segment is willing to accept.
+
+[RFC793]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">16</property>
@@ -2627,9 +2784,16 @@ A checksum on the header only.  Since some header fields change (e.g., time to l
                 <child>
                   <object class="GtkButton" id="tcp_checksumbutton">
                     <property name="label" translatable="yes">Checksum</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Checksum
+
+The checksum field is the 16 bit one's complement of the one's complement sum of all 16 bit words in the header and text.  If a segment contains an odd number of header and text octets to be checksummed, the last octet is padded on the right with zeros to form a 16 bit word for checksum purposes.  The pad is not transmitted as part of the segment.  While computing the checksum, the checksum field itself is replaced with zeros.
+
+[RFC793]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -2641,9 +2805,16 @@ A checksum on the header only.  Since some header fields change (e.g., time to l
                 <child>
                   <object class="GtkButton" id="tcp_urgentpointerbutton">
                     <property name="label" translatable="yes">Urgent Pointer</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Urgent Pointer
+
+This field communicates the current value of the urgent pointer as a positive offset from the sequence number in this segment.  The urgent pointer points to the sequence number of the octet following the urgent data.  This field is only be interpreted in segments with the URG control bit set.
+
+[RFC793]</property>
+                    <property name="use_action_appearance">False</property>
                   </object>
                   <packing>
                     <property name="left_attach">16</property>
