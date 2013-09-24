@@ -401,6 +401,11 @@ void display_packet(GtkWidget *widget, gpointer data) {
   int pos;
   pos = gtk_notebook_get_current_page(protocolheadernotebook);
 
+  // clear grids
+  while (gtk_notebook_get_n_pages(protocolheadernotebook) > 0) {
+    gtk_notebook_remove_page(protocolheadernotebook, 0);
+  }
+
   switch (pcap_datalink(handler)) {
 
     case DLT_EN10MB:
@@ -542,6 +547,9 @@ void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore) {
   gtk_list_store_clear(packetliststore);
 
   // clear grids
+  while (gtk_notebook_get_n_pages(protocolheadernotebook) > 0) {
+    gtk_notebook_remove_page(protocolheadernotebook, 0);
+  }
 
   // check for empty file pointer
   if (filename == NULL) return;
@@ -626,6 +634,9 @@ int main (int argc, char *argv[]) {
   // init packet list store (database)
   packetliststore = GTK_LIST_STORE(gtk_builder_get_object (builder, "packetliststore"));
 
+  // init protocol header field(s)
+  protocolheadernotebook = GTK_NOTEBOOK(gtk_builder_get_object (builder, "protocolheadernotebook"));
+
   // init open file menu
   openimagemenuitem = GTK_IMAGE_MENU_ITEM(gtk_builder_get_object (builder, "openimagemenuitem"));
   g_signal_connect(openimagemenuitem, "activate", G_CALLBACK(openpcapfile), packetliststore);
@@ -651,8 +662,6 @@ int main (int argc, char *argv[]) {
     filename = argv[1];
     loadpcapfile(GTK_WIDGET(mainwindow), packetliststore);
   }
-
-  protocolheadernotebook = GTK_NOTEBOOK(gtk_builder_get_object (builder, "protocolheadernotebook"));
 
   // ENTER MAIN LOOP
   gtk_main();
