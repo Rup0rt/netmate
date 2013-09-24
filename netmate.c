@@ -20,6 +20,7 @@
 #define LINKTYPE_LINUX_SLL 113
 
 void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore);
+void append_field(GtkGrid *grid, int *x, int *y, int size, char *label);
 
 char *filename = NULL;
 
@@ -218,7 +219,7 @@ GtkGrid *ethernet_grid(struct ether_header *eth) {
   return(grid);
 }
 
-GtkGrid *ipv4_grid(struct iphdr *ipv4) {
+GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
   GtkGrid *grid;
   int x;
   char *label;		// label of buttons to set
@@ -298,6 +299,32 @@ GtkGrid *ipv4_grid(struct iphdr *ipv4) {
   // read and set ip destination address
   sprintf(label, "Destination IP Address (0x%08x = %u.%u.%u.%u)", htonl(ipv4->daddr), ipv4->daddr & 0xff, (ipv4->daddr >> 8) & 0xff, (ipv4->daddr >> 16) & 0xff, (ipv4->daddr >> 24) & 0xff);
   gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 5, 32, 1);
+
+  int y = 6;
+  int left = (ipv4->ihl-0x05)*4;
+  x = 0;
+  int optlen;
+  int opttype;
+  char *optdata;
+  while (left > 0) {
+    opttype = options[0];
+
+    sprintf(label, "Opt. Type (0x%02x)", opttype);
+    append_field(grid, &x, &y, 8, label);
+
+    optlen = options[1];
+    sprintf(label, "Opt. Len (0x%02x)", optlen);
+    append_field(grid, &x, &y, 8, label);
+
+    optdata = malloc(optlen-2);
+    memcpy(options+2, optdata, optlen-2);
+    sprintf(label, "Opt. Data XXX");
+    append_field(grid, &x, &y, (optlen-2)*8, label);
+    free(optdata);
+
+    left -= optlen;
+    options = options + optlen;
+  }
 
   // free memory of label
   free(label);
@@ -492,7 +519,7 @@ void display_packet(GtkWidget *widget, gpointer data) {
       ipv4 = (struct iphdr*)layer3ptr;
 
       // display ipv4 tab
-      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(ipv4_grid(ipv4)), gtk_label_new("IPv4"));
+      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(ipv4_grid(ipv4, ((u_char*)ipv4 + sizeof(struct iphdr)))), gtk_label_new("IPv4"));
 
       switch (ipv4->protocol) {
         case IPPROTO_TCP:
