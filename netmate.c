@@ -14,7 +14,7 @@
 #endif
 
 // THE VERSION OF NETMATE
-#define VERSION "0.12"
+#define VERSION "0.13"
 
 // ADDITIONAL LINK TYPES
 #define LINKTYPE_LINUX_SLL 113
@@ -178,62 +178,6 @@ GtkGrid *sll_grid(struct sll_header *sll) {
   return(grid);
 }
 
-GtkGrid *tcp_grid(struct tcphdr *tcp) {
-  GtkGrid *grid;
-  int x;
-  char *label;		// label of buttons to set
-
-  grid = GTK_GRID(gtk_grid_new());
-
-  gtk_grid_set_column_homogeneous(grid, TRUE);
-
-  // allocate memory for button label
-  label = malloc(100);
-
-  for (x=0; x<32; x++) {
-    sprintf(label, "%u", x);
-    gtk_grid_attach(grid, gtk_label_new(label), x, 0, 1, 1);
-  }
-
-  sprintf(label, "Source Port (%u)", htons(tcp->source));
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 1, 16, 1);
-
-  sprintf(label, "Destination Port (%u)", htons(tcp->dest));
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 1, 16, 1);
-
-  sprintf(label, "Sequence Number (%u)", htonl(tcp->seq));
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 2, 32, 1);
-
-  sprintf(label, "Acknowledgement Number (%u)", htonl(tcp->ack_seq));
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 3, 32, 1);
-
-  sprintf(label, "Data Offset (0x%02x)", tcp->doff);
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 4, 4, 1);
-
-  sprintf(label, "Reserved (0x%02x)", tcp->res1 & 0x0e);
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 4, 4, 3, 1);
-
-  sprintf(label, "Flags (%u%u%u%u%u%u%u%u%ub)", tcp->res1 & 0x01, tcp->res2 & 0x02, tcp->res2 & 0x01, tcp->urg, tcp->ack, tcp->psh, tcp->rst, tcp->syn, tcp->fin);
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 7, 4, 9, 1);
-
-  sprintf(label, "Window Size (%u)", htons(tcp->window));
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 4, 16, 1);
-
-  sprintf(label, "Checksum (0x%04x)", htons(tcp->check));
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 5, 16, 1);
-
-  sprintf(label, "Urgent Pointer (0x%04x)", htons(tcp->urg_ptr));
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 5, 16, 1);
-
-  // free memory of label
-  free(label);
-
-  // show ethernet grid (tab)
-  gtk_widget_show_all(GTK_WIDGET(grid));
-
-  return(grid);
-}
-
 GtkGrid *ethernet_grid(struct ether_header *eth) {
   GtkGrid *grid;
   int x;
@@ -364,6 +308,112 @@ GtkGrid *ipv4_grid(struct iphdr *ipv4) {
   return(grid);
 }
 
+void append_field(GtkGrid *grid, int *x, int *y, int size, char *label) {
+  while (*x + size > 32) {
+    gtk_grid_attach(grid, gtk_button_new_with_label(label), *x, *y, 32-*x, 1);
+    size -= 32-*x;
+    *x = 0;
+    *y = *y + 1;
+  }
+
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), *x, *y, size, 1);
+  *x = *x + size;
+  if (*x == 32) { *x = 0; *y = *y + 1; }
+}
+
+GtkGrid *tcp_grid(struct tcphdr *tcp, u_char *options) {
+  GtkGrid *grid;
+  int x;
+  char *label;		// label of buttons to set
+
+  grid = GTK_GRID(gtk_grid_new());
+
+  gtk_grid_set_column_homogeneous(grid, TRUE);
+
+  // allocate memory for button label
+  label = malloc(100);
+
+  for (x=0; x<32; x++) {
+    sprintf(label, "%u", x);
+    gtk_grid_attach(grid, gtk_label_new(label), x, 0, 1, 1);
+  }
+
+  sprintf(label, "Source Port (%u)", htons(tcp->source));
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 1, 16, 1);
+
+  sprintf(label, "Destination Port (%u)", htons(tcp->dest));
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 1, 16, 1);
+
+  sprintf(label, "Sequence Number (%u)", htonl(tcp->seq));
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 2, 32, 1);
+
+  sprintf(label, "Acknowledgement Number (%u)", htonl(tcp->ack_seq));
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 3, 32, 1);
+
+  sprintf(label, "Data Offset (0x%02x)", tcp->doff);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 4, 4, 1);
+
+  sprintf(label, "Reserved (0x%02x)", tcp->res1 & 0x0e);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 4, 4, 3, 1);
+
+  sprintf(label, "Flags (%u%u%u%u%u%u%u%u%ub)", tcp->res1 & 0x01, tcp->res2 & 0x02, tcp->res2 & 0x01, tcp->urg, tcp->ack, tcp->psh, tcp->rst, tcp->syn, tcp->fin);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 7, 4, 9, 1);
+
+  sprintf(label, "Window Size (%u)", htons(tcp->window));
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 4, 16, 1);
+
+  sprintf(label, "Checksum (0x%04x)", htons(tcp->check));
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 5, 16, 1);
+
+  sprintf(label, "Urgent Pointer (0x%04x)", htons(tcp->urg_ptr));
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 5, 16, 1);
+
+  int y = 6;
+  int left = (tcp->doff-0x05)*4;
+  x = 0;
+  int optlen;
+  int opttype;
+  char *optdata;
+  while (left > 0) {
+    opttype = options[0];
+
+    if (opttype == 0x01) {
+      sprintf(label, "NOP");
+      append_field(grid, &x, &y, 8, label);
+
+      optlen = 1;
+    } else {
+
+      sprintf(label, "Opt. Type (0x%02x)", opttype);
+      append_field(grid, &x, &y, 8, label);
+
+      optlen = options[1];
+      sprintf(label, "Opt. Len (0x%02x)", optlen);
+      append_field(grid, &x, &y, 8, label);
+
+      if (optlen > 2) {
+
+        optdata = malloc(optlen-2);
+        memcpy(options+2, optdata, optlen-2);
+        sprintf(label, "Opt. Data XXX");
+        append_field(grid, &x, &y, (optlen-2)*8, label);
+        free(optdata);
+      }
+    }
+
+    left -= optlen;
+    options = options + optlen;
+  }
+
+  // free memory of label
+  free(label);
+
+  // show ethernet grid (tab)
+  gtk_widget_show_all(GTK_WIDGET(grid));
+
+  return(grid);
+}
+
 void display_packet(GtkWidget *widget, gpointer data) {
   GtkTreeSelection *selection;		// tree selection
   GtkTreeModel     *model;		// tree model
@@ -448,7 +498,7 @@ void display_packet(GtkWidget *widget, gpointer data) {
         case IPPROTO_TCP:
           tcp = (struct tcphdr*)(layer3ptr + sizeof(struct iphdr));
 
-          gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(tcp_grid(tcp)), gtk_label_new("TCP"));
+          gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(tcp_grid(tcp, ((u_char*)tcp + sizeof(struct tcphdr)))), gtk_label_new("TCP"));
 
           break;
       }
