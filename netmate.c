@@ -26,20 +26,8 @@ char *filename = NULL;
 // global grids (protocol container)
 GtkNotebook *protocolheadernotebook;
 
-// layer2
-GtkGrid *sllgrid;
-
 // layer4
 GtkGrid *tcpgrid;
-
-// global sll buttons
-GtkButton *sll_packetbutton;
-GtkButton *sll_arphdrbutton;
-GtkButton *sll_lengthbutton;
-GtkButton *sll_addressbutton;
-GtkButton *sll_addressbutton2;
-GtkButton *sll_addressbutton3;
-GtkButton *sll_protocolbutton;
 
 // global tcp buttons
 GtkButton *tcp_destportbutton;
@@ -162,34 +150,47 @@ gint show_question(GtkWidget *widget, gpointer message) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void fill_sll(struct sll_header *sll) {
+GtkGrid *sll_grid(struct sll_header *sll) {
+  GtkGrid *grid;
+  int x;
   char *label;		// label of buttons to set
+
+  grid = GTK_GRID(gtk_grid_new());
+
+  gtk_grid_set_column_homogeneous(grid, TRUE);
 
   // allocate memory for button label
   label = malloc(100);
 
+  for (x=0; x<32; x++) {
+    sprintf(label, "%u", x);
+    gtk_grid_attach(grid, gtk_label_new(label), x, 0, 1, 1);
+  }
+
   sprintf(label, "Packet Type (0x%04x)", htons(sll->sll_pkttype));
-  gtk_button_set_label(sll_packetbutton, label);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 1, 16, 1);
 
   sprintf(label, "ARPHDR_ Type (0x%04x)", htons(sll->sll_hatype));
-  gtk_button_set_label(sll_arphdrbutton, label);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 1, 16, 1);
 
   sprintf(label, "Link-layer Address Length (0x%04x)", htons(sll->sll_halen));
-  gtk_button_set_label(sll_lengthbutton, label);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 2, 16, 1);
 
   sprintf(label, "Link-layer Address (%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x)", sll->sll_addr[0], sll->sll_addr[1], sll->sll_addr[2], sll->sll_addr[3], sll->sll_addr[4], sll->sll_addr[5], sll->sll_addr[6], sll->sll_addr[7]);
-  gtk_button_set_label(sll_addressbutton, label);
-  gtk_button_set_label(sll_addressbutton2, label);
-  gtk_button_set_label(sll_addressbutton3, label);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 2, 16, 1);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 3, 32, 1);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 4, 16, 1);
 
   sprintf(label, "Protocol Type (0x%04x)", htons(sll->sll_protocol));
-  gtk_button_set_label(sll_protocolbutton, label);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 4, 16, 1);
 
   // free memory of label
   free(label);
 
   // show ethernet grid (tab)
-  gtk_widget_show_all(GTK_WIDGET(sllgrid));
+  gtk_widget_show_all(GTK_WIDGET(grid));
+
+  return(grid);
 }
 
 void fill_tcp(struct tcphdr *tcp) {
@@ -405,7 +406,6 @@ void display_packet(GtkWidget *widget, gpointer data) {
   // remember tab position and hide all tabs
   int pos;
   pos = gtk_notebook_get_current_page(protocolheadernotebook);
-  gtk_widget_hide(GTK_WIDGET(sllgrid));
   gtk_widget_hide(GTK_WIDGET(tcpgrid));
 
   switch (pcap_datalink(handler)) {
@@ -426,7 +426,7 @@ void display_packet(GtkWidget *widget, gpointer data) {
       sll = (struct sll_header*)(packet);
 
       // display sll tab
-      fill_sll(sll);
+      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(sll_grid(sll)), gtk_label_new("Linux Cooked"));
 
       layer3 = htons(sll->sll_protocol);
       layer3ptr = (void*)(packet + sizeof(struct sll_header));
@@ -548,7 +548,6 @@ void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore) {
   // clear all items
   gtk_list_store_clear(packetliststore);
 
-  gtk_widget_hide(GTK_WIDGET(sllgrid));
   gtk_widget_hide(GTK_WIDGET(tcpgrid));
 
   // check for empty file pointer
@@ -647,17 +646,7 @@ int main (int argc, char *argv[]) {
   g_signal_connect (packettreeview, "cursor-changed", G_CALLBACK(display_packet), NULL);
 
   // init grids
-  sllgrid = GTK_GRID(gtk_builder_get_object (builder, "sllgrid"));
   tcpgrid = GTK_GRID(gtk_builder_get_object (builder, "tcpgrid"));
-
-  // init sll header buttons
-  sll_packetbutton = GTK_BUTTON(gtk_builder_get_object (builder, "sll_packetbutton"));
-  sll_arphdrbutton = GTK_BUTTON(gtk_builder_get_object (builder, "sll_arphdrbutton"));
-  sll_lengthbutton = GTK_BUTTON(gtk_builder_get_object (builder, "sll_lengthbutton"));
-  sll_addressbutton = GTK_BUTTON(gtk_builder_get_object (builder, "sll_addressbutton"));
-  sll_addressbutton2 = GTK_BUTTON(gtk_builder_get_object (builder, "sll_addressbutton2"));
-  sll_addressbutton3 = GTK_BUTTON(gtk_builder_get_object (builder, "sll_addressbutton3"));
-  sll_protocolbutton = GTK_BUTTON(gtk_builder_get_object (builder, "sll_protocolbutton"));
 
   // init TCP header buttons
   tcp_destportbutton = GTK_BUTTON(gtk_builder_get_object (builder, "tcp_destportbutton"));
