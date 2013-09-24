@@ -29,9 +29,6 @@ GtkNotebook *protocolheadernotebook;
 // layer2
 GtkGrid *sllgrid;
 
-// layer3
-GtkGrid *ipv4grid;
-
 // layer4
 GtkGrid *tcpgrid;
 
@@ -43,21 +40,6 @@ GtkButton *sll_addressbutton;
 GtkButton *sll_addressbutton2;
 GtkButton *sll_addressbutton3;
 GtkButton *sll_protocolbutton;
-
-// global ipv4 buttons
-GtkButton *ipv4_versionbutton;
-GtkButton *ipv4_ihlbutton;
-GtkButton *ipv4_dscpbutton;
-GtkButton *ipv4_ecnbutton;
-GtkButton *ipv4_totallengthbutton;
-GtkButton *ipv4_identificationbutton;
-GtkButton *ipv4_flagsbutton;
-GtkButton *ipv4_fragmentoffsetbutton;
-GtkButton *ipv4_timetolivebutton;
-GtkButton *ipv4_protocolbutton;
-GtkButton *ipv4_headerchecksumbutton;
-GtkButton *ipv4_sourceipaddressbutton;
-GtkButton *ipv4_destinationipaddressbutton;
 
 // global tcp buttons
 GtkButton *tcp_destportbutton;
@@ -210,87 +192,6 @@ void fill_sll(struct sll_header *sll) {
   gtk_widget_show_all(GTK_WIDGET(sllgrid));
 }
 
-void fill_ipv4(struct iphdr *ipv4) {
-  char *label;	// label of buttons to set
-  char ipv4_version;			// ip version
-  char ipv4_headerlength;		// ip header length
-  char ipv4_dscp;			// ip dscp field
-  char ipv4_ecn;			// ip ecn field
-  char ipv4_flags;			// ip header flags
-  short ipv4_offset;			// ip fragment offset
-
-  // allocate memory for button label
-  label = malloc(100);
-
-  // read and set ip version field
-  ipv4_version = ipv4->version;
-  sprintf(label, "Version (%u)", ipv4_version);
-  gtk_button_set_label(ipv4_versionbutton, label);
-
-  // read and set ip header length (<< 2 to calculate real size)
-  ipv4_headerlength = ipv4->ihl;
-  sprintf(label, "IHL (0x%02x)", ipv4_headerlength);
-  gtk_button_set_label(ipv4_ihlbutton, label);
-
-  // read and set ip dscp field
-  ipv4_dscp = ipv4->tos >> 2;
-  sprintf(label, "DSCP (0x%02x)", ipv4_dscp);
-  gtk_button_set_label(ipv4_dscpbutton, label);
-
-  // read and set ip ecn field
-  ipv4_ecn = ipv4->tos & 0x03;
-  sprintf(label, "ECN\n(0x%02x)", ipv4_ecn);
-//  sprintf(label, "<span size='7000'>ECN (0x%02x)</span>", ipv4_ecn);
-//  GtkWidget *test = gtk_label_new(NULL);
-//  gtk_label_set_markup(GTK_LABEL(test), label);
-  gtk_button_set_label(ipv4_ecnbutton, label);
-//  gtk_button_set_image(ipv4_ecnbutton, test);
-
-  // read and set total length of ip header
-  sprintf(label, "Total Length (%u)", htons(ipv4->tot_len));
-  gtk_button_set_label(ipv4_totallengthbutton, label);
-
-  // read and set identification field of ip packet
-  sprintf(label, "Identification (0x%04x)", htons(ipv4->id));
-  gtk_button_set_label(ipv4_identificationbutton, label);
-
-  // read and set ip header flags
-  ipv4_flags = htons(ipv4->frag_off) >> 13;
-  sprintf(label, "Flags (0x%02x)", ipv4_flags);
-  gtk_button_set_label(ipv4_flagsbutton, label);
-
-  // read and set ip fragmentation offset (<< 3 to calculate real size);
-  ipv4_offset = (htons(ipv4->frag_off) & 0x1fff);
-  sprintf(label, "Fragment Offset (0x%04x)", ipv4_offset);
-  gtk_button_set_label(ipv4_fragmentoffsetbutton, label);
-
-  // read and set time to live of ip packet
-  sprintf(label, "Time To Live (%u)", ipv4->ttl);
-  gtk_button_set_label(ipv4_timetolivebutton, label);
-
-  // read an d set upper layer protocol
-  sprintf(label, "Protocol (%u)", ipv4->protocol);
-  gtk_button_set_label(ipv4_protocolbutton, label);
-
-  // read and set ip header checksum
-  sprintf(label, "Header checksum (0x%04x)", htons(ipv4->check));
-  gtk_button_set_label(ipv4_headerchecksumbutton, label);
-
-  // read and set ip source address
-  sprintf(label, "Source IP Address (0x%08x = %u.%u.%u.%u)", htonl(ipv4->saddr), ipv4->saddr & 0xff, (ipv4->saddr >> 8) & 0xff, (ipv4->saddr >> 16) & 0xff, (ipv4->saddr >> 24) & 0xff);
-  gtk_button_set_label(ipv4_sourceipaddressbutton, label);
-
-  // read and set ip destination address
-  sprintf(label, "Destination IP Address (0x%08x = %u.%u.%u.%u)", htonl(ipv4->daddr), ipv4->daddr & 0xff, (ipv4->daddr >> 8) & 0xff, (ipv4->daddr >> 16) & 0xff, (ipv4->daddr >> 24) & 0xff);
-  gtk_button_set_label(ipv4_destinationipaddressbutton, label);
-
-  // free memory of label
-  free(label);
-
-  // display ipv4 grid (tab)
-  gtk_widget_show_all(GTK_WIDGET(ipv4grid));
-}
-
 void fill_tcp(struct tcphdr *tcp) {
   char *label;		// label of buttons to set
 
@@ -374,6 +275,100 @@ GtkGrid *ethernet_grid(struct ether_header *eth) {
   return(grid);
 }
 
+GtkGrid *ipv4_grid(struct iphdr *ipv4) {
+  GtkGrid *grid;
+  int x;
+  char *label;		// label of buttons to set
+  char ipv4_version;			// ip version
+  char ipv4_headerlength;		// ip header length
+  char ipv4_dscp;			// ip dscp field
+  char ipv4_ecn;			// ip ecn field
+  char ipv4_flags;			// ip header flags
+  short ipv4_offset;			// ip fragment offset
+
+  grid = GTK_GRID(gtk_grid_new());
+
+  gtk_grid_set_column_homogeneous(grid, TRUE);
+
+  // allocate memory for button label
+  label = malloc(100);
+
+  for (x=0; x<32; x++) {
+    sprintf(label, "%u", x);
+    gtk_grid_attach(grid, gtk_label_new(label), x, 0, 1, 1);
+  }
+
+  // read and set ip version field
+  ipv4_version = ipv4->version;
+  sprintf(label, "Version (%u)", ipv4_version);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 1, 4, 1);
+
+  // read and set ip header length (<< 2 to calculate real size)
+  ipv4_headerlength = ipv4->ihl;
+  sprintf(label, "IHL (0x%02x)", ipv4_headerlength);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 4, 1, 4, 1);
+
+  // read and set ip dscp field
+  ipv4_dscp = ipv4->tos >> 2;
+  sprintf(label, "DSCP (0x%02x)", ipv4_dscp);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 8, 1, 6, 1);
+
+  // read and set ip ecn field
+  ipv4_ecn = ipv4->tos & 0x03;
+  sprintf(label, "ECN\n(0x%02x)", ipv4_ecn);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 14, 1, 2, 1);
+//  sprintf(label, "<span size='7000'>ECN (0x%02x)</span>", ipv4_ecn);
+//  GtkWidget *test = gtk_label_new(NULL);
+//  gtk_label_set_markup(GTK_LABEL(test), label);
+//  gtk_button_set_image(ipv4_ecnbutton, test);
+
+  // read and set total length of ip header
+  sprintf(label, "Total Length (%u)", htons(ipv4->tot_len));
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 1, 16, 1);
+
+  // read and set identification field of ip packet
+  sprintf(label, "Identification (0x%04x)", htons(ipv4->id));
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 2, 16, 1);
+
+  // read and set ip header flags
+  ipv4_flags = htons(ipv4->frag_off) >> 13;
+  sprintf(label, "Flags (0x%02x)", ipv4_flags);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 2, 3, 1);
+
+  // read and set ip fragmentation offset (<< 3 to calculate real size);
+  ipv4_offset = (htons(ipv4->frag_off) & 0x1fff);
+  sprintf(label, "Fragment Offset (0x%04x)", ipv4_offset);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 19, 2, 13, 1);
+
+  // read and set time to live of ip packet
+  sprintf(label, "Time To Live (%u)", ipv4->ttl);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 3, 8, 1);
+
+  // read an d set upper layer protocol
+  sprintf(label, "Protocol (%u)", ipv4->protocol);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 8, 3, 8, 1);
+
+  // read and set ip header checksum
+  sprintf(label, "Header checksum (0x%04x)", htons(ipv4->check));
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 3, 16, 1);
+
+  // read and set ip source address
+  sprintf(label, "Source IP Address (0x%08x = %u.%u.%u.%u)", htonl(ipv4->saddr), ipv4->saddr & 0xff, (ipv4->saddr >> 8) & 0xff, (ipv4->saddr >> 16) & 0xff, (ipv4->saddr >> 24) & 0xff);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 4, 32, 1);
+
+  // read and set ip destination address
+  sprintf(label, "Destination IP Address (0x%08x = %u.%u.%u.%u)", htonl(ipv4->daddr), ipv4->daddr & 0xff, (ipv4->daddr >> 8) & 0xff, (ipv4->daddr >> 16) & 0xff, (ipv4->daddr >> 24) & 0xff);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 5, 32, 1);
+
+  // free memory of label
+  free(label);
+
+  // show ethernet grid (tab)
+  gtk_widget_show_all(GTK_WIDGET(grid));
+
+  return(grid);
+}
+
 void display_packet(GtkWidget *widget, gpointer data) {
   GtkTreeSelection *selection;		// tree selection
   GtkTreeModel     *model;		// tree model
@@ -411,7 +406,6 @@ void display_packet(GtkWidget *widget, gpointer data) {
   int pos;
   pos = gtk_notebook_get_current_page(protocolheadernotebook);
   gtk_widget_hide(GTK_WIDGET(sllgrid));
-  gtk_widget_hide(GTK_WIDGET(ipv4grid));
   gtk_widget_hide(GTK_WIDGET(tcpgrid));
 
   switch (pcap_datalink(handler)) {
@@ -450,7 +444,7 @@ void display_packet(GtkWidget *widget, gpointer data) {
       ipv4 = (struct iphdr*)layer3ptr;
 
       // display ipv4 tab
-      fill_ipv4(ipv4);
+      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(ipv4_grid(ipv4)), gtk_label_new("IPv4"));
 
       switch (ipv4->protocol) {
         case IPPROTO_TCP:
@@ -555,7 +549,6 @@ void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore) {
   gtk_list_store_clear(packetliststore);
 
   gtk_widget_hide(GTK_WIDGET(sllgrid));
-  gtk_widget_hide(GTK_WIDGET(ipv4grid));
   gtk_widget_hide(GTK_WIDGET(tcpgrid));
 
   // check for empty file pointer
@@ -655,7 +648,6 @@ int main (int argc, char *argv[]) {
 
   // init grids
   sllgrid = GTK_GRID(gtk_builder_get_object (builder, "sllgrid"));
-  ipv4grid = GTK_GRID(gtk_builder_get_object (builder, "ipv4grid"));
   tcpgrid = GTK_GRID(gtk_builder_get_object (builder, "tcpgrid"));
 
   // init sll header buttons
@@ -666,21 +658,6 @@ int main (int argc, char *argv[]) {
   sll_addressbutton2 = GTK_BUTTON(gtk_builder_get_object (builder, "sll_addressbutton2"));
   sll_addressbutton3 = GTK_BUTTON(gtk_builder_get_object (builder, "sll_addressbutton3"));
   sll_protocolbutton = GTK_BUTTON(gtk_builder_get_object (builder, "sll_protocolbutton"));
-
-  // init IP header buttons
-  ipv4_versionbutton = GTK_BUTTON(gtk_builder_get_object (builder, "ipv4_versionbutton"));
-  ipv4_ihlbutton = GTK_BUTTON(gtk_builder_get_object (builder, "ipv4_ihlbutton"));
-  ipv4_dscpbutton = GTK_BUTTON(gtk_builder_get_object (builder, "ipv4_dscpbutton"));
-  ipv4_ecnbutton = GTK_BUTTON(gtk_builder_get_object (builder, "ipv4_ecnbutton"));
-  ipv4_totallengthbutton = GTK_BUTTON(gtk_builder_get_object (builder, "ipv4_totallengthbutton"));
-  ipv4_identificationbutton = GTK_BUTTON(gtk_builder_get_object (builder, "ipv4_identificationbutton"));
-  ipv4_flagsbutton = GTK_BUTTON(gtk_builder_get_object (builder, "ipv4_flagsbutton"));
-  ipv4_fragmentoffsetbutton = GTK_BUTTON(gtk_builder_get_object (builder, "ipv4_fragmentoffsetbutton"));
-  ipv4_timetolivebutton = GTK_BUTTON(gtk_builder_get_object (builder, "ipv4_timetolivebutton"));
-  ipv4_protocolbutton = GTK_BUTTON(gtk_builder_get_object (builder, "ipv4_protocolbutton"));
-  ipv4_headerchecksumbutton = GTK_BUTTON(gtk_builder_get_object (builder, "ipv4_headerchecksumbutton"));
-  ipv4_sourceipaddressbutton = GTK_BUTTON(gtk_builder_get_object (builder, "ipv4_sourceipaddressbutton"));
-  ipv4_destinationipaddressbutton = GTK_BUTTON(gtk_builder_get_object (builder, "ipv4_destinationipaddressbutton"));
 
   // init TCP header buttons
   tcp_destportbutton = GTK_BUTTON(gtk_builder_get_object (builder, "tcp_destportbutton"));
