@@ -14,7 +14,7 @@
 #endif
 
 // THE VERSION OF NETMATE
-#define VERSION "0.13"
+#define VERSION "0.14"
 
 // ADDITIONAL LINK TYPES
 #define LINKTYPE_LINUX_SLL 113
@@ -225,7 +225,6 @@ GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
   char *label;		// label of buttons to set
   char ipv4_dscp;			// ip dscp field
   char ipv4_ecn;			// ip ecn field
-  char ipv4_flags;			// ip header flags
   short ipv4_offset;			// ip fragment offset
 
   grid = GTK_GRID(gtk_grid_new());
@@ -241,21 +240,21 @@ GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
   }
 
   // read and set ip version field
-  sprintf(label, "Version (%u)", ipv4->version);
+  sprintf(label, "Version: %u", ipv4->version);
   gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 1, 4, 1);
 
   // read and set ip header length (<< 2 to calculate real size)
-  sprintf(label, "IHL (0x%02x)", ipv4->ihl);
+  sprintf(label, "IHL: %u (%u bytes)", ipv4->ihl, ipv4->ihl*4);
   gtk_grid_attach(grid, gtk_button_new_with_label(label), 4, 1, 4, 1);
 
   // read and set ip dscp field
   ipv4_dscp = ipv4->tos >> 2;
-  sprintf(label, "DSCP (0x%02x)", ipv4_dscp);
+  sprintf(label, "DSCP: 0x%02x", ipv4_dscp);
   gtk_grid_attach(grid, gtk_button_new_with_label(label), 8, 1, 6, 1);
 
   // read and set ip ecn field
   ipv4_ecn = ipv4->tos & 0x03;
-  sprintf(label, "ECN\n(0x%02x)", ipv4_ecn);
+  sprintf(label, "ECN: 0x%02x", ipv4_ecn);
   gtk_grid_attach(grid, gtk_button_new_with_label(label), 14, 1, 2, 1);
 //  sprintf(label, "<span size='7000'>ECN (0x%02x)</span>", ipv4_ecn);
 //  GtkWidget *test = gtk_label_new(NULL);
@@ -263,41 +262,57 @@ GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
 //  gtk_button_set_image(ipv4_ecnbutton, test);
 
   // read and set total length of ip header
-  sprintf(label, "Total Length (%u)", htons(ipv4->tot_len));
+  sprintf(label, "Total Length: %u", htons(ipv4->tot_len));
   gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 1, 16, 1);
 
   // read and set identification field of ip packet
-  sprintf(label, "Identification (0x%04x)", htons(ipv4->id));
+  sprintf(label, "Identification: 0x%04x", htons(ipv4->id));
   gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 2, 16, 1);
 
-  // read and set ip header flags
-  ipv4_flags = htons(ipv4->frag_off) >> 13;
-  sprintf(label, "Flags (0x%02x)", ipv4_flags);
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 2, 3, 1);
+  // reserved flag
+  if (ipv4->frag_off & htons(IP_RF)) {
+    gtk_grid_attach(grid, gtk_button_new_with_label("RF"), 16, 2, 1, 1);
+  } else {
+    gtk_grid_attach(grid, gtk_button_new_with_label("rf"), 16, 2, 1, 1);
+  }
+
+  // dont fragment flag
+  if (ipv4->frag_off & htons(IP_DF)) {
+    gtk_grid_attach(grid, gtk_button_new_with_label("DF"), 17, 2, 1, 1);
+  } else {
+    gtk_grid_attach(grid, gtk_button_new_with_label("df"), 17, 2, 1, 1);
+  }
+
+  // more fragments flag
+  if (ipv4->frag_off & htons(IP_MF)) {
+    gtk_grid_attach(grid, gtk_button_new_with_label("MF"), 18, 2, 1, 1);
+  } else {
+    gtk_grid_attach(grid, gtk_button_new_with_label("mf"), 18, 2, 1, 1);
+  }
 
   // read and set ip fragmentation offset (<< 3 to calculate real size);
-  ipv4_offset = (htons(ipv4->frag_off) & 0x1fff);
-  sprintf(label, "Fragment Offset (0x%04x)", ipv4_offset);
+  ipv4_offset = (htons(ipv4->frag_off) & IP_OFFMASK);
+  sprintf(label, "Fragment Offset: %u (%u bytes)", ipv4_offset, ipv4_offset << 3);
   gtk_grid_attach(grid, gtk_button_new_with_label(label), 19, 2, 13, 1);
 
   // read and set time to live of ip packet
-  sprintf(label, "Time To Live (%u)", ipv4->ttl);
+  sprintf(label, "Time To Live: %u", ipv4->ttl);
   gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 3, 8, 1);
 
   // read an d set upper layer protocol
-  sprintf(label, "Protocol (%u)", ipv4->protocol);
+  sprintf(label, "Protocol: %u", ipv4->protocol);
   gtk_grid_attach(grid, gtk_button_new_with_label(label), 8, 3, 8, 1);
 
   // read and set ip header checksum
-  sprintf(label, "Header checksum (0x%04x)", htons(ipv4->check));
+  sprintf(label, "Header checksum: 0x%04x", htons(ipv4->check));
   gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 3, 16, 1);
 
   // read and set ip source address
-  sprintf(label, "Source IP Address (0x%08x = %u.%u.%u.%u)", htonl(ipv4->saddr), ipv4->saddr & 0xff, (ipv4->saddr >> 8) & 0xff, (ipv4->saddr >> 16) & 0xff, (ipv4->saddr >> 24) & 0xff);
+  sprintf(label, "Source IP Address: %u.%u.%u.%u", ipv4->saddr & 0xff, (ipv4->saddr >> 8) & 0xff, (ipv4->saddr >> 16) & 0xff, (ipv4->saddr >> 24) & 0xff);
   gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 4, 32, 1);
 
   // read and set ip destination address
-  sprintf(label, "Destination IP Address (0x%08x = %u.%u.%u.%u)", htonl(ipv4->daddr), ipv4->daddr & 0xff, (ipv4->daddr >> 8) & 0xff, (ipv4->daddr >> 16) & 0xff, (ipv4->daddr >> 24) & 0xff);
+  sprintf(label, "Destination IP Address: %u.%u.%u.%u", ipv4->daddr & 0xff, (ipv4->daddr >> 8) & 0xff, (ipv4->daddr >> 16) & 0xff, (ipv4->daddr >> 24) & 0xff);
   gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 5, 32, 1);
 
   int y = 6;
@@ -310,11 +325,20 @@ GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
   while (left > 0) {
     opttype = options[0];
 
-    sprintf(label, "Opt. Type (0x%02x)", opttype);
-    append_field(grid, &x, &y, 8, label);
+    if (opttype & IPOPT_COPY) {
+      append_field(grid, &x, &y, 1, "C");
+    } else {
+      append_field(grid, &x, &y, 1, "c");
+    }
+
+    sprintf(label, "Class: %u", opttype & IPOPT_CLASS_MASK);
+    append_field(grid, &x, &y, 2, label);
+
+    sprintf(label, "Number: %u", opttype & IPOPT_NUMBER_MASK);
+    append_field(grid, &x, &y, 5, label);
 
     optlen = options[1];
-    sprintf(label, "Opt. Len (0x%02x)", optlen);
+    sprintf(label, "Length: %u", optlen);
     append_field(grid, &x, &y, 8, label);
 
     optdata = malloc(optlen*2);
