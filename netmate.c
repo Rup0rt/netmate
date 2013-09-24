@@ -26,21 +26,6 @@ char *filename = NULL;
 // global grids (protocol container)
 GtkNotebook *protocolheadernotebook;
 
-// layer4
-GtkGrid *tcpgrid;
-
-// global tcp buttons
-GtkButton *tcp_destportbutton;
-GtkButton *tcp_sourceportbutton;
-GtkButton *tcp_seqnumbutton;
-GtkButton *tcp_acknumbutton;
-GtkButton *tcp_offsetbutton;
-GtkButton *tcp_reservedbutton;
-GtkButton *tcp_flagsbutton;
-GtkButton *tcp_winsizebutton;
-GtkButton *tcp_checksumbutton;
-GtkButton *tcp_urgentpointerbutton;
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // GTK INFORMATION WINDOWS //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -193,47 +178,60 @@ GtkGrid *sll_grid(struct sll_header *sll) {
   return(grid);
 }
 
-void fill_tcp(struct tcphdr *tcp) {
+GtkGrid *tcp_grid(struct tcphdr *tcp) {
+  GtkGrid *grid;
+  int x;
   char *label;		// label of buttons to set
+
+  grid = GTK_GRID(gtk_grid_new());
+
+  gtk_grid_set_column_homogeneous(grid, TRUE);
 
   // allocate memory for button label
   label = malloc(100);
 
+  for (x=0; x<32; x++) {
+    sprintf(label, "%u", x);
+    gtk_grid_attach(grid, gtk_label_new(label), x, 0, 1, 1);
+  }
+
   sprintf(label, "Source Port (%u)", htons(tcp->source));
-  gtk_button_set_label(tcp_sourceportbutton, label);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 1, 16, 1);
 
   sprintf(label, "Destination Port (%u)", htons(tcp->dest));
-  gtk_button_set_label(tcp_destportbutton, label);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 1, 16, 1);
 
   sprintf(label, "Sequence Number (%u)", htonl(tcp->seq));
-  gtk_button_set_label(tcp_seqnumbutton, label);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 2, 32, 1);
 
   sprintf(label, "Acknowledgement Number (%u)", htonl(tcp->ack_seq));
-  gtk_button_set_label(tcp_acknumbutton, label);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 3, 32, 1);
 
   sprintf(label, "Data Offset (0x%02x)", tcp->doff);
-  gtk_button_set_label(tcp_offsetbutton, label);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 4, 4, 1);
 
   sprintf(label, "Reserved (0x%02x)", tcp->res1 & 0x0e);
-  gtk_button_set_label(tcp_reservedbutton, label);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 4, 4, 3, 1);
 
   sprintf(label, "Flags (%u%u%u%u%u%u%u%u%ub)", tcp->res1 & 0x01, tcp->res2 & 0x02, tcp->res2 & 0x01, tcp->urg, tcp->ack, tcp->psh, tcp->rst, tcp->syn, tcp->fin);
-  gtk_button_set_label(tcp_flagsbutton, label);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 7, 4, 9, 1);
 
   sprintf(label, "Window Size (%u)", htons(tcp->window));
-  gtk_button_set_label(tcp_winsizebutton, label);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 4, 16, 1);
 
   sprintf(label, "Checksum (0x%04x)", htons(tcp->check));
-  gtk_button_set_label(tcp_checksumbutton, label);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 0, 5, 16, 1);
 
   sprintf(label, "Urgent Pointer (0x%04x)", htons(tcp->urg_ptr));
-  gtk_button_set_label(tcp_urgentpointerbutton, label);
+  gtk_grid_attach(grid, gtk_button_new_with_label(label), 16, 5, 16, 1);
 
   // free memory of label
   free(label);
 
   // show ethernet grid (tab)
-  gtk_widget_show_all(GTK_WIDGET(tcpgrid));
+  gtk_widget_show_all(GTK_WIDGET(grid));
+
+  return(grid);
 }
 
 GtkGrid *ethernet_grid(struct ether_header *eth) {
@@ -406,7 +404,6 @@ void display_packet(GtkWidget *widget, gpointer data) {
   // remember tab position and hide all tabs
   int pos;
   pos = gtk_notebook_get_current_page(protocolheadernotebook);
-  gtk_widget_hide(GTK_WIDGET(tcpgrid));
 
   switch (pcap_datalink(handler)) {
 
@@ -450,7 +447,7 @@ void display_packet(GtkWidget *widget, gpointer data) {
         case IPPROTO_TCP:
           tcp = (struct tcphdr*)(layer3ptr + sizeof(struct iphdr));
 
-	  fill_tcp(tcp);
+          gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(tcp_grid(tcp)), gtk_label_new("TCP"));
 
           break;
       }
@@ -548,7 +545,7 @@ void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore) {
   // clear all items
   gtk_list_store_clear(packetliststore);
 
-  gtk_widget_hide(GTK_WIDGET(tcpgrid));
+  // clear grids
 
   // check for empty file pointer
   if (filename == NULL) return;
@@ -644,21 +641,6 @@ int main (int argc, char *argv[]) {
   // init packet tree view (database representation)
   packettreeview = GTK_TREE_VIEW(gtk_builder_get_object (builder, "packettreeview"));
   g_signal_connect (packettreeview, "cursor-changed", G_CALLBACK(display_packet), NULL);
-
-  // init grids
-  tcpgrid = GTK_GRID(gtk_builder_get_object (builder, "tcpgrid"));
-
-  // init TCP header buttons
-  tcp_destportbutton = GTK_BUTTON(gtk_builder_get_object (builder, "tcp_destportbutton"));
-  tcp_sourceportbutton = GTK_BUTTON(gtk_builder_get_object (builder, "tcp_sourceportbutton"));
-  tcp_seqnumbutton = GTK_BUTTON(gtk_builder_get_object (builder, "tcp_seqnumbutton"));
-  tcp_acknumbutton = GTK_BUTTON(gtk_builder_get_object (builder, "tcp_acknumbutton"));
-  tcp_offsetbutton = GTK_BUTTON(gtk_builder_get_object (builder, "tcp_offsetbutton"));
-  tcp_reservedbutton = GTK_BUTTON(gtk_builder_get_object (builder, "tcp_reservedbutton"));
-  tcp_flagsbutton = GTK_BUTTON(gtk_builder_get_object (builder, "tcp_flagsbutton"));
-  tcp_winsizebutton = GTK_BUTTON(gtk_builder_get_object (builder, "tcp_winsizebutton"));
-  tcp_checksumbutton = GTK_BUTTON(gtk_builder_get_object (builder, "tcp_checksumbutton"));
-  tcp_urgentpointerbutton = GTK_BUTTON(gtk_builder_get_object (builder, "tcp_urgentpointerbutton"));
 
   // set title of main window
   title = malloc(100);
