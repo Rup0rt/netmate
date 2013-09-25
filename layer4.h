@@ -185,7 +185,7 @@ GtkGrid *tcp_grid(struct tcphdr *tcp, u_char *options) {
 
         // print bytes in hex format into array
         for (i=0; i<optlen-2; ++i) sprintf(&optdata[i*2], "%02x", (unsigned int)options[i+2]);
-        optdata[optlen] = 0x00;
+        optdata[(optlen-2)*2] = 0x00;
 
         // option data field
         sprintf(label, "Option Data: 0x%s", optdata);

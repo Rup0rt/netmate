@@ -143,7 +143,7 @@ GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
 
     // print bytes in hex format into array
     for (i=0; i<optlen-2; ++i) sprintf(&optdata[i*2], "%02x", (unsigned int)options[i+2]);
-    optdata[optlen] = 0x00;
+    optdata[(optlen-2)*2] = 0x00;
 
     // option data field
     sprintf(label, "Opt. Data 0x%s", optdata);
