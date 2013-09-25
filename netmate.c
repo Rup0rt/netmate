@@ -11,6 +11,7 @@
   #include <netinet/if_ether.h>
   #include <netinet/ip.h>
   #include <netinet/tcp.h>
+  #include <netinet/udp.h>
 #endif
 
 // THE VERSION OF NETMATE
@@ -173,6 +174,7 @@ void display_packet(GtkWidget *widget, gpointer data) {
   struct sll_header *sll;		// sll header (linux cooked)
   struct iphdr *ipv4;			// ipv4_header pointer
   struct tcphdr *tcp;
+  struct udphdr *udp;
   int i = 1;				// loop counter to track packet
   unsigned short layer3 = 0;
   void *layer3ptr = NULL;
@@ -245,6 +247,12 @@ void display_packet(GtkWidget *widget, gpointer data) {
           tcp = (struct tcphdr*)(layer3ptr + sizeof(struct iphdr));
 
           gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(tcp_grid(tcp, ((u_char*)tcp + sizeof(struct tcphdr)))), gtk_label_new("TCP"));
+
+          break;
+        case IPPROTO_UDP:
+          udp = (struct udphdr*)(layer3ptr + sizeof(struct iphdr));
+
+          gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(udp_grid(udp)), gtk_label_new("UDP"));
 
           break;
       }

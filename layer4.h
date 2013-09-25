@@ -2,6 +2,11 @@
 // netmate layer4 protocols //
 ///////////////////////////////////////////////////////////////////////////////////
 
+GtkGrid *tcp_grid(struct tcphdr *tcp, u_char *options);
+GtkGrid *udp_grid(struct udphdr *udp);
+
+///////////////////////////////////////////////////////////////////////////////////
+
 GtkGrid *tcp_grid(struct tcphdr *tcp, u_char *options) {
   GtkGrid *grid;	// the grid itself
   char *label;		// label of buttons to set
@@ -197,6 +202,56 @@ GtkGrid *tcp_grid(struct tcphdr *tcp, u_char *options) {
     // increase pointer to options header
     options = options + optlen;
   }
+
+  // free memory of label
+  free(label);
+
+  // show ethernet grid (tab)
+  gtk_widget_show_all(GTK_WIDGET(grid));
+
+  // pass grid back to tab builder function
+  return(grid);
+}
+
+GtkGrid *udp_grid(struct udphdr *udp) {
+  GtkGrid *grid;	// the grid itself
+  char *label;		// label of buttons to set
+  int x,y;		// position pointer to next empty grid cell
+
+  // init new empty grid
+  grid = GTK_GRID(gtk_grid_new());
+
+  // set columns to be uniform sized (for better bit size representation)
+  gtk_grid_set_column_homogeneous(grid, TRUE);
+
+  // allocate memory for button label
+  label = malloc(100);
+
+  // build bit indication topic line (0 1 2 .. 31)
+  for (x=0; x<32; x++) {
+    sprintf(label, "%u", x);
+    gtk_grid_attach(grid, gtk_label_new(label), x, 0, 1, 1);
+  }
+
+  // set cell pointer to next empty grid cell
+  x=0;
+  y=1;
+
+  // source port
+  sprintf(label, "Source Port: %u", htons(udp->source));
+  append_field(grid, &x, &y, sizeof(udp->source)*8, label);
+
+  // destination port
+  sprintf(label, "Destination Port: %u", htons(udp->dest));
+  append_field(grid, &x, &y, sizeof(udp->dest)*8, label);
+
+  // length
+  sprintf(label, "Length: %u", htons(udp->len));
+  append_field(grid, &x, &y, sizeof(udp->len)*8, label);
+
+  // checksum
+  sprintf(label, "Checksum: 0x%02x", htons(udp->check));
+  append_field(grid, &x, &y, sizeof(udp->check)*8, label);
 
   // free memory of label
   free(label);
