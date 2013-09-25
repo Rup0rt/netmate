@@ -2,30 +2,39 @@
 // netmate layer3 protocols //
 ///////////////////////////////////////////////////////////////////////////////////
 
-GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options);
+GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options);	// ipv4 (type 0x0800)
 
 ///////////////////////////////////////////////////////////////////////////////////
 
 GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
-  GtkGrid *grid;
-  int x,y;
+  GtkGrid *grid;	// the grid itself
   char *label;		// label of buttons to set
-  char ipv4_dscp;			// ip dscp field
-  char ipv4_ecn;			// ip ecn field
-  short ipv4_offset;			// ip fragment offset
+  char ipv4_dscp;	// ip dscp field
+  char ipv4_ecn;	// ip ecn field
+  char *optdata;	// option data
+  short ipv4_offset;	// ip fragment offset
+  int x,y;		// position pointer to next empty grid cell
+  int left;		// bytes left for ipv4 options
+  int optlen;		// length of options field
+  int opttype;		// option type
+  int i;		// loop counter for raw data representation
 
+  // init new empty grid
   grid = GTK_GRID(gtk_grid_new());
 
+  // set columns to be uniform sized (for better bit size representation)
   gtk_grid_set_column_homogeneous(grid, TRUE);
 
   // allocate memory for button label
   label = malloc(100);
 
+  // build bit indication topic line (0 1 2 .. 31)
   for (x=0; x<32; x++) {
     sprintf(label, "%u", x);
     gtk_grid_attach(grid, gtk_label_new(label), x, 0, 1, 1);
   }
 
+  // set cell pointer to next empty grid cell
   x=0;
   y=1;
 
@@ -46,10 +55,6 @@ GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
   ipv4_ecn = ipv4->tos & 0x03;
   sprintf(label, "ECN:\n0x%02x", ipv4_ecn);
   append_field(grid, &x, &y, 2, label);
-//  sprintf(label, "<span size='7000'>ECN (0x%02x)</span>", ipv4_ecn);
-//  GtkWidget *test = gtk_label_new(NULL);
-//  gtk_label_set_markup(GTK_LABEL(test), label);
-//  gtk_button_set_image(ipv4_ecnbutton, test);
 
   // read and set total length of ip header
   sprintf(label, "Total Length: %u", htons(ipv4->tot_len));
@@ -105,42 +110,52 @@ GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
   sprintf(label, "Destination IP Address: %u.%u.%u.%u", ipv4->daddr & 0xff, (ipv4->daddr >> 8) & 0xff, (ipv4->daddr >> 16) & 0xff, (ipv4->daddr >> 24) & 0xff);
   append_field(grid, &x, &y, sizeof(ipv4->daddr)*8, label);
 
-  int left = (ipv4->ihl-0x05)*4;
-  int optlen;
-  int opttype;
-  int i;
-  char *optdata;
+  // count bytes of option fields
+  left = (ipv4->ihl-0x05)*4;
+
+  // progress bytes until no option bytes left
   while (left > 0) {
+    // get option type (first byte)
     opttype = options[0];
 
+    // copy bit (bit 1)
     if (opttype & IPOPT_COPY) {
       append_field(grid, &x, &y, 1, "C");
     } else {
       append_field(grid, &x, &y, 1, "c");
     }
 
+    // option class (bit 2 & 3)
     sprintf(label, "Class: %u", opttype & IPOPT_CLASS_MASK);
     append_field(grid, &x, &y, 2, label);
 
+    // option number (bit 4-8)
     sprintf(label, "Number: %u", opttype & IPOPT_NUMBER_MASK);
     append_field(grid, &x, &y, 5, label);
 
+    // options length (INCLUDING type & length fields)
     optlen = options[1];
     sprintf(label, "Length: %u", optlen);
     append_field(grid, &x, &y, 8, label);
 
+    // allocate memory for option data (*2 because of hex representation)
     optdata = malloc(optlen*2);
 
-    for (i=0; i<optlen-2; ++i)
-      sprintf(&optdata[i*2], "%02x", (unsigned int)options[i+2]);
-
+    // print bytes in hex format into array
+    for (i=0; i<optlen-2; ++i) sprintf(&optdata[i*2], "%02x", (unsigned int)options[i+2]);
     optdata[optlen] = 0x00;
-    sprintf(label, "Opt. Data 0x%s", optdata);
 
+    // option data field
+    sprintf(label, "Opt. Data 0x%s", optdata);
     append_field(grid, &x, &y, (optlen-2)*8, label);
+
+    // free data
     free(optdata);
 
+    // reduce length of field
     left -= optlen;
+
+    // increase pointer to options header
     options = options + optlen;
   }
 
@@ -150,5 +165,6 @@ GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
   // show ethernet grid (tab)
   gtk_widget_show_all(GTK_WIDGET(grid));
 
+  // pass grid back to tab builder function
   return(grid);
 }
