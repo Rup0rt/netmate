@@ -13,6 +13,7 @@
   #include <netinet/ip.h>
   #include <netinet/ip6.h>
   #include <netinet/ip_icmp.h>
+  #include <netinet/icmp6.h>
   #include <netinet/tcp.h>
   #include <netinet/udp.h>
 #endif
@@ -178,12 +179,13 @@ void display_packet(GtkWidget *widget, gpointer data) {
   struct arphdr *arp;
   struct iphdr *ipv4;			// ipv4_header pointer
   struct ip6_hdr *ipv6;
+  struct icmphdr *icmp;
+  struct icmp6_hdr *icmpv6;
   struct tcphdr *tcp;
   struct udphdr *udp;
-  struct icmphdr *icmp;
   int i = 1;				// loop counter to track packet
-  unsigned short layer3 = 0;
-  void *layer3ptr = NULL;
+  unsigned short nextproto = 0;
+  void *nextptr = NULL;
 
   if (filename == NULL) return;
 
@@ -219,8 +221,8 @@ void display_packet(GtkWidget *widget, gpointer data) {
       // display ethernet tab
       gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(ethernet_grid(eth)), gtk_label_new("Ethernet"));
 
-      layer3 = htons(eth->ether_type);
-      layer3ptr = (void*)(packet + sizeof(struct ether_header));
+      nextproto = htons(eth->ether_type);
+      nextptr = (void*)(packet + sizeof(struct ether_header));
 
       break;
     case LINKTYPE_LINUX_SLL:
@@ -230,8 +232,8 @@ void display_packet(GtkWidget *widget, gpointer data) {
       // display sll tab
       gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(sll_grid(sll)), gtk_label_new("Linux Cooked"));
 
-      layer3 = htons(sll->sll_protocol);
-      layer3ptr = (void*)(packet + sizeof(struct sll_header));
+      nextproto = htons(sll->sll_protocol);
+      nextptr = (void*)(packet + sizeof(struct sll_header));
 
       break;
     default:
@@ -240,51 +242,76 @@ void display_packet(GtkWidget *widget, gpointer data) {
       return;
   }
 
-  switch (layer3) {
+  switch (nextproto) {
     case ETHERTYPE_ARP:
       // ARP
-      arp = (struct arphdr*)layer3ptr;
+      arp = (struct arphdr*)nextptr;
+      nextproto = 0xffff;
+      nextptr += sizeof(struct arphdr);
 
       // display arp tab
-      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(arp_grid(arp, ((u_char*)arp + sizeof(struct arphdr)))), gtk_label_new("ARP"));
+      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(arp_grid(arp, ((u_char*)nextptr))), gtk_label_new("ARP"));
 
       break;
     case ETHERTYPE_IP:
       // IPV4
-      ipv4 = (struct iphdr*)layer3ptr;
+      ipv4 = (struct iphdr*)nextptr;
+      nextproto = ipv4->protocol;
+      nextptr += sizeof(struct iphdr);
 
       // display ipv4 tab
-      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(ipv4_grid(ipv4, ((u_char*)ipv4 + sizeof(struct iphdr)))), gtk_label_new("IPv4"));
+      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(ipv4_grid(ipv4, ((u_char*)nextptr))), gtk_label_new("IPv4"));
 
-      switch (ipv4->protocol) {
-        case IPPROTO_ICMP:
-          icmp = (struct icmphdr*)(layer3ptr + sizeof(struct iphdr));
-
-          gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(icmp_grid(icmp, ((u_char*)icmp + sizeof(struct icmphdr)), htons(ipv4->tot_len)-(ipv4->ihl*4))), gtk_label_new("ICMP"));
-
-          break;
-        case IPPROTO_TCP:
-          tcp = (struct tcphdr*)(layer3ptr + sizeof(struct iphdr));
-
-          gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(tcp_grid(tcp, ((u_char*)tcp + sizeof(struct tcphdr)))), gtk_label_new("TCP"));
-
-          break;
-        case IPPROTO_UDP:
-          udp = (struct udphdr*)(layer3ptr + sizeof(struct iphdr));
-
-          gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(udp_grid(udp)), gtk_label_new("UDP"));
-
-          break;
-      }
       break;
     case ETHERTYPE_IPV6:
       // IPV6
-      ipv6 = (struct ip6_hdr*)layer3ptr;
+      ipv6 = (struct ip6_hdr*)nextptr;
+      nextptr += sizeof(struct ip6_hdr);
 
       // display ipv4 tab
-      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(ipv6_grid(ipv6, ((u_char*)ipv6 + sizeof(struct ip6_hdr)))), gtk_label_new("IPv6"));
+      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(ipv6_grid(ipv6, ((u_char*)nextptr))), gtk_label_new("IPv6"));
+
+      nextproto = ipv6->ip6_ctlun.ip6_un1.ip6_un1_nxt;
+      while (nextproto == IPPROTO_HOPOPTS) {
+        // next header
+        nextproto = ((u_char*)nextptr)[0];
+
+        nextptr += (((u_char*)nextptr)[1]+1) * 8;
+      }
 
       break;
+  }
+
+  if (nextproto != 0xffff) {
+    switch (nextproto) {
+      case IPPROTO_ICMP:
+        icmp = (struct icmphdr*)nextptr;
+        nextptr += sizeof(struct icmphdr);
+
+        gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(icmp_grid(icmp, ((u_char*)nextptr), htons(ipv4->tot_len)-(ipv4->ihl*4))), gtk_label_new("ICMP"));
+
+        break;
+      case IPPROTO_ICMPV6:
+        icmpv6 = (struct icmp6_hdr*)nextptr;
+        nextptr += sizeof(struct icmp6_hdr);
+
+        gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(icmpv6_grid(icmpv6, ((u_char*)nextptr))), gtk_label_new("ICMPv6"));
+
+        break;
+      case IPPROTO_TCP:
+        tcp = (struct tcphdr*)nextptr;
+        nextptr += sizeof(struct tcphdr);
+
+        gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(tcp_grid(tcp, ((u_char*)nextptr))), gtk_label_new("TCP"));
+
+        break;
+      case IPPROTO_UDP:
+        udp = (struct udphdr*)nextptr;
+
+        gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(udp_grid(udp)), gtk_label_new("UDP"));
+
+        break;
+    }
   }
 
   // switch to tab that was former selected
@@ -320,8 +347,8 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **sour
   struct iphdr *ipv4;                   // ipv4_header pointer
   struct ip6_hdr *ipv6;
   struct sll_header *sll;               // sll header (linux cooked)
-  unsigned short layer3 = 0;
-  void *layer3ptr = NULL;
+  unsigned short nextproto = 0;
+  void *nextptr = NULL;
 
   *source = malloc(100);
   *destination = malloc(100);
@@ -340,8 +367,8 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **sour
       sprintf(*source, "%02x:%02x:%02x:%02x:%02x:%02x", eth->ether_shost[0], eth->ether_shost[1], eth->ether_shost[2], eth->ether_shost[3], eth->ether_shost[4], eth->ether_shost[5]);
       sprintf(*destination, "%02x:%02x:%02x:%02x:%02x:%02x", eth->ether_dhost[0], eth->ether_dhost[1], eth->ether_dhost[2], eth->ether_dhost[3], eth->ether_dhost[4], eth->ether_dhost[5]);
 
-      layer3 = htons(eth->ether_type);
-      layer3ptr = (void*)(packet + sizeof(struct ether_header));
+      nextproto = htons(eth->ether_type);
+      nextptr = (void*)(packet + sizeof(struct ether_header));
 
       break;
     case LINKTYPE_LINUX_SLL:
@@ -353,16 +380,17 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **sour
       sprintf(*source, "%02x:%02x:%02x:%02x:%02x:%02x", sll->sll_addr[0], sll->sll_addr[1], sll->sll_addr[2], sll->sll_addr[3], sll->sll_addr[4], sll->sll_addr[5]);
       // destination is unknown in SLL
 
-      layer3 = htons(sll->sll_protocol);
-      layer3ptr = (void*)(packet + sizeof(struct sll_header));
+      nextproto = htons(sll->sll_protocol);
+      nextptr = (void*)(packet + sizeof(struct sll_header));
 
       break;
   }
 
-  switch (layer3) {
+  switch (nextproto) {
     case ETHERTYPE_ARP:
       // ARP
-//      arp = (struct arphdr*)layer3ptr;
+//      arp = (struct arphdr*)nextptr;
+      nextproto = 0xffff;
 
       sprintf(*protocol, "ARP");
 
@@ -370,41 +398,59 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **sour
 
     case ETHERTYPE_IP:
       // IPV4
-      ipv4 = (struct iphdr*)layer3ptr;
+      ipv4 = (struct iphdr*)nextptr;
+      nextptr += sizeof(struct iphdr);
+      nextproto = ipv4->protocol;
 
       sprintf(*protocol, "IPv4");
       sprintf(*source, "%u.%u.%u.%u", ipv4->saddr & 0xff, (ipv4->saddr >> 8) & 0xff, (ipv4->saddr >> 16) & 0xff, (ipv4->saddr >> 24) & 0xff);
       sprintf(*destination, "%u.%u.%u.%u", ipv4->daddr & 0xff, (ipv4->daddr >> 8) & 0xff, (ipv4->daddr >> 16) & 0xff, (ipv4->daddr >> 24) & 0xff);
-
-      switch (ipv4->protocol) {
-        case IPPROTO_ICMP:
-//          icmp = (struct icmphdr*)(layer3ptr + sizeof(struct iphdr));
-
-          sprintf(*protocol, "ICMP");
-
-          break;
-        case IPPROTO_TCP:
-//          tcp = (struct tcphdr*)(layer3ptr + sizeof(struct iphdr));
-
-          sprintf(*protocol, "TCP");
-
-          break;
-        case IPPROTO_UDP:
-//          udp = (struct udphdr*)(layer3ptr + sizeof(struct iphdr));
-
-          sprintf(*protocol, "UDP");
-
-          break;
-      }
-
       break;
     case ETHERTYPE_IPV6:
-      ipv6 = (struct ip6_hdr*)layer3ptr;
+      ipv6 = (struct ip6_hdr*)nextptr;
+      nextptr += sizeof(struct ip6_hdr);
 
       sprintf(*protocol, "IPv6");
       sprintf(*source, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x", htons(ipv6->ip6_src.__in6_u.__u6_addr16[0]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[1]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[2]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[3]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[4]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[5]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[6]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[7]));
       sprintf(*destination, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x", htons(ipv6->ip6_dst.__in6_u.__u6_addr16[0]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[1]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[2]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[3]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[4]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[5]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[6]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[7]));
+
+      nextproto = ipv6->ip6_ctlun.ip6_un1.ip6_un1_nxt;
+      while (nextproto == IPPROTO_HOPOPTS) {
+        // next header
+        nextproto = ((u_char*)nextptr)[0];
+
+        nextptr += (((u_char*)nextptr)[1]+1) * 8;
+      }
       break;
+  }
+
+  if (nextproto != 0xffff) {
+    switch (nextproto) {
+      case IPPROTO_ICMP:
+//        icmp = (struct icmphdr*)(nextptr + sizeof(struct iphdr));
+
+        sprintf(*protocol, "ICMP");
+
+        break;
+      case IPPROTO_ICMPV6:
+//        icmp = (struct icmphdr*)(nextptr + sizeof(struct iphdr));
+
+        sprintf(*protocol, "ICMPv6");
+
+        break;
+      case IPPROTO_TCP:
+//        tcp = (struct tcphdr*)(nextptr + sizeof(struct iphdr));
+
+        sprintf(*protocol, "TCP");
+
+        break;
+      case IPPROTO_UDP:
+//        udp = (struct udphdr*)(nextptr + sizeof(struct iphdr));
+
+        sprintf(*protocol, "UDP");
+
+        break;
+    }
   }
 }
 
