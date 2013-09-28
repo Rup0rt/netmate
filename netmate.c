@@ -15,7 +15,7 @@
 #endif
 
 // THE VERSION OF NETMATE
-#define VERSION "0.14"
+#define VERSION "0.15"
 
 // ADDITIONAL LINK TYPES
 #define LINKTYPE_LINUX_SLL 113
@@ -26,7 +26,7 @@ void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore);
 void append_field(GtkGrid *grid, int *x, int *y, int size, char *label);
 void display_packet(GtkWidget *widget, gpointer data);
 void openpcapfile(GtkWidget *widget, gpointer data);
-void getinfo(pcap_t *handler, const u_char *packet, char **source, char **destination);
+void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **source, char **destination);
 
 #include "layer2.h"
 #include "layer3.h"
@@ -288,7 +288,7 @@ void openpcapfile(GtkWidget *widget, gpointer data) {
   gtk_widget_destroy(GTK_WIDGET(fileopendialog));
 }
 
-void getinfo(pcap_t *handler, const u_char *packet, char **source, char **destination) {
+void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **source, char **destination) {
   struct ether_header *eth;
   struct iphdr *ipv4;                   // ipv4_header pointer
   struct sll_header *sll;               // sll header (linux cooked)
@@ -300,12 +300,15 @@ void getinfo(pcap_t *handler, const u_char *packet, char **source, char **destin
   memset(*source, 0, 100);
   memset(*destination, 0, 100);
 
+  sprintf(*protocol, "UNKNOWN");
+
   switch (pcap_datalink(handler)) {
 
     case DLT_EN10MB:
       // set pointer to ethernet header
       eth = (struct ether_header*)(packet);
 
+      sprintf(*protocol, "Ethernet");
       sprintf(*source, "%02x:%02x:%02x:%02x:%02x:%02x", eth->ether_shost[0], eth->ether_shost[1], eth->ether_shost[2], eth->ether_shost[3], eth->ether_shost[4], eth->ether_shost[5]);
       sprintf(*destination, "%02x:%02x:%02x:%02x:%02x:%02x", eth->ether_dhost[0], eth->ether_dhost[1], eth->ether_dhost[2], eth->ether_dhost[3], eth->ether_dhost[4], eth->ether_dhost[5]);
 
@@ -317,6 +320,7 @@ void getinfo(pcap_t *handler, const u_char *packet, char **source, char **destin
       // LINUX COOKED
       sll = (struct sll_header*)(packet);
 
+      sprintf(*protocol, "SLL");
       // TODO: need to check sll->halen to get REAL size (6 chosen here)
       sprintf(*source, "%02x:%02x:%02x:%02x:%02x:%02x", sll->sll_addr[0], sll->sll_addr[1], sll->sll_addr[2], sll->sll_addr[3], sll->sll_addr[4], sll->sll_addr[5]);
       // destination is unknown in SLL
@@ -332,8 +336,24 @@ void getinfo(pcap_t *handler, const u_char *packet, char **source, char **destin
       // IPV4
       ipv4 = (struct iphdr*)layer3ptr;
 
+      sprintf(*protocol, "IPv4");
       sprintf(*source, "%u.%u.%u.%u", ipv4->saddr & 0xff, (ipv4->saddr >> 8) & 0xff, (ipv4->saddr >> 16) & 0xff, (ipv4->saddr >> 24) & 0xff);
       sprintf(*destination, "%u.%u.%u.%u", ipv4->daddr & 0xff, (ipv4->daddr >> 8) & 0xff, (ipv4->daddr >> 16) & 0xff, (ipv4->daddr >> 24) & 0xff);
+
+      switch (ipv4->protocol) {
+        case IPPROTO_TCP:
+//          tcp = (struct tcphdr*)(layer3ptr + sizeof(struct iphdr));
+
+          sprintf(*protocol, "TCP");
+
+          break;
+        case IPPROTO_UDP:
+//          udp = (struct udphdr*)(layer3ptr + sizeof(struct iphdr));
+
+          sprintf(*protocol, "UDP");
+
+          break;
+      }
 
       break;
   }
@@ -382,6 +402,7 @@ void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore) {
   char *pcaptime = malloc(20);
   char *source;
   char *destination;
+  char *protocol;
 
   // read packets from file and fill tree view
   i = 1;
@@ -399,10 +420,10 @@ void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore) {
     }
 
     sprintf(pcaptime, "%ld.%06ld", realtime, realutime);
-    getinfo(handler, packet, &source, &destination);
+    getinfo(handler, packet, &protocol, &source, &destination);
 
     // insert new row into tree view
-    gtk_list_store_insert_with_values(packetliststore, &iter, -1, 0,  i++, 1, pcaptime, 2, source, 3, destination, -1);
+    gtk_list_store_insert_with_values(packetliststore, &iter, -1, 0,  i++, 1, pcaptime, 2, protocol, 3, source, 4, destination, -1);
   }
 
   free(pcaptime);
