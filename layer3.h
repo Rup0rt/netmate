@@ -5,7 +5,8 @@
 GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options);	// ipv4 (type 0x0800)
 GtkGrid *ipv6_grid(struct ip6_hdr *ipv6, u_char *options);	// ipv6 (type 0x08dd)
 GtkGrid *arp_grid(struct arphdr *arp, u_char *options);		// arp (type 0x0806)
-GtkGrid *icmp_grid(struct icmphdr *icmp, u_char *options, int left);	// icmp (type 0x01)
+GtkGrid *icmp_grid(struct icmphdr *icmp, u_char *options, int left);	// icmp
+GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options);	// icmp
 
 ///////////////////////////////////////////////////////////////////////////////////
 
@@ -432,6 +433,56 @@ GtkGrid *icmp_grid(struct icmphdr *icmp, u_char *options, int left) {
 
   // free data
   free(optdata);
+
+  // free memory of label
+  free(label);
+
+  // show ethernet grid (tab)
+  gtk_widget_show_all(GTK_WIDGET(grid));
+
+  // pass grid back to tab builder function
+  return(grid);
+}
+
+GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options) {
+  GtkGrid *grid;	// the grid itself
+  char *label;		// label of buttons to set
+  int x,y;		// position pointer to next empty grid cell
+
+  // init new empty grid
+  grid = GTK_GRID(gtk_grid_new());
+
+  // set columns to be uniform sized (for better bit size representation)
+  gtk_grid_set_column_homogeneous(grid, TRUE);
+
+  // allocate memory for button label
+  label = malloc(100);
+
+  // build bit indication topic line (0 1 2 .. 31)
+  for (x=0; x<32; x++) {
+    sprintf(label, "%u", x);
+    gtk_grid_attach(grid, gtk_label_new(label), x, 0, 1, 1);
+  }
+
+  // set cell pointer to next empty grid cell
+  x=0;
+  y=1;
+
+  // type
+  sprintf(label, "Type: %u", icmpv6->icmp6_type);
+  append_field(grid, &x, &y, sizeof(icmpv6->icmp6_type)*8, label);
+
+  // code
+  sprintf(label, "Code: %u", icmpv6->icmp6_code);
+  append_field(grid, &x, &y, sizeof(icmpv6->icmp6_code)*8, label);
+
+  // checksum
+  sprintf(label, "Code: 0x%04x", htons(icmpv6->icmp6_cksum));
+  append_field(grid, &x, &y, sizeof(icmpv6->icmp6_cksum)*8, label);
+
+  // data
+  sprintf(label, "Data: 0x%08x", htonl(icmpv6->icmp6_dataun.icmp6_un_data32[0]));
+  append_field(grid, &x, &y, 32, label);
 
   // free memory of label
   free(label);
