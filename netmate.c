@@ -9,6 +9,7 @@
 #ifndef WIN32
   #include <arpa/inet.h>
   #include <netinet/if_ether.h>
+  #include <net/if_arp.h>
   #include <netinet/ip.h>
   #include <netinet/tcp.h>
   #include <netinet/udp.h>
@@ -172,6 +173,7 @@ void display_packet(GtkWidget *widget, gpointer data) {
   unsigned int packetnumber;		// currently secected packet number
   struct ether_header *eth;
   struct sll_header *sll;		// sll header (linux cooked)
+  struct arphdr *arp;
   struct iphdr *ipv4;			// ipv4_header pointer
   struct tcphdr *tcp;
   struct udphdr *udp;
@@ -235,6 +237,14 @@ void display_packet(GtkWidget *widget, gpointer data) {
   }
 
   switch (layer3) {
+    case ETHERTYPE_ARP:
+      // ARP
+      arp = (struct arphdr*)layer3ptr;
+
+      // display arp tab
+      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(arp_grid(arp, ((u_char*)arp + sizeof(struct arphdr)))), gtk_label_new("ARP"));
+
+      break;
     case ETHERTYPE_IP:
       // IPV4
       ipv4 = (struct iphdr*)layer3ptr;
@@ -332,6 +342,14 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **sour
   }
 
   switch (layer3) {
+    case ETHERTYPE_ARP:
+      // ARP
+//      arp = (struct arphdr*)layer3ptr;
+
+      sprintf(*protocol, "ARP");
+
+      break;
+
     case ETHERTYPE_IP:
       // IPV4
       ipv4 = (struct iphdr*)layer3ptr;
