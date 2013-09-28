@@ -3,6 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options);	// ipv4 (type 0x0800)
+GtkGrid *ipv6_grid(struct ip6_hdr *ipv6, u_char *options);	// ipv6 (type 0x08dd)
 GtkGrid *arp_grid(struct arphdr *arp, u_char *options);		// arp (type 0x0806)
 GtkGrid *icmp_grid(struct icmphdr *icmp, u_char *options, int left);	// icmp (type 0x01)
 
@@ -159,6 +160,126 @@ GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
 
     // increase pointer to options header
     options = options + optlen;
+  }
+
+  // free memory of label
+  free(label);
+
+  // show ethernet grid (tab)
+  gtk_widget_show_all(GTK_WIDGET(grid));
+
+  // pass grid back to tab builder function
+  return(grid);
+}
+
+GtkGrid *ipv6_grid(struct ip6_hdr *ipv6, u_char *options) {
+  GtkGrid *grid;	// the grid itself
+  char *label;		// label of buttons to set
+  int x,y;		// position pointer to next empty grid cell
+  char *optdata;
+  int i;
+  int optlen;
+  int opttype;
+  int hoplen;
+  int left;
+  int ipv6_version;
+  int ipv6_tc;
+  int ipv6_fl;
+  int ipv6_nh;
+
+  // init new empty grid
+  grid = GTK_GRID(gtk_grid_new());
+
+  // set columns to be uniform sized (for better bit size representation)
+  gtk_grid_set_column_homogeneous(grid, TRUE);
+
+  // allocate memory for button label
+  label = malloc(100);
+
+  // build bit indication topic line (0 1 2 .. 31)
+  for (x=0; x<32; x++) {
+    sprintf(label, "%u", x);
+    gtk_grid_attach(grid, gtk_label_new(label), x, 0, 1, 1);
+  }
+
+  // set cell pointer to next empty grid cell
+  x=0;
+  y=1;
+
+  // read and set ip version field
+  ipv6_version = htonl(ipv6->ip6_ctlun.ip6_un1.ip6_un1_flow) >> 28;
+  sprintf(label, "Version: %u", ipv6_version);
+  append_field(grid, &x, &y, 4, label);
+
+  // traffic class
+  ipv6_tc = htonl(ipv6->ip6_ctlun.ip6_un1.ip6_un1_flow) >> 20 & 0x00ff;
+  sprintf(label, "Traffic Class: 0x%02x", ipv6_tc);
+  append_field(grid, &x, &y, 8, label);
+
+  // flow label
+  ipv6_fl = htonl(ipv6->ip6_ctlun.ip6_un1.ip6_un1_flow) & 0x000fffff;
+  sprintf(label, "Flow Label: 0x%06x", ipv6_fl);
+  append_field(grid, &x, &y, 20, label);
+
+  // payload length
+  sprintf(label, "Payload Length: %u", htons(ipv6->ip6_ctlun.ip6_un1.ip6_un1_plen));
+  append_field(grid, &x, &y, sizeof(ipv6->ip6_ctlun.ip6_un1.ip6_un1_plen)*8, label);
+
+  // next header
+  ipv6_nh = ipv6->ip6_ctlun.ip6_un1.ip6_un1_nxt;
+  sprintf(label, "Next Header: %u", ipv6_nh);
+  append_field(grid, &x, &y, sizeof(ipv6->ip6_ctlun.ip6_un1.ip6_un1_nxt)*8, label);
+
+  // hop limit
+  sprintf(label, "Hop Limit: %u", ipv6->ip6_ctlun.ip6_un1.ip6_un1_hlim);
+  append_field(grid, &x, &y, sizeof(ipv6->ip6_ctlun.ip6_un1.ip6_un1_hlim)*8, label);
+
+  // source address
+  sprintf(label, "Source Address: %04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x", htons(ipv6->ip6_src.__in6_u.__u6_addr16[0]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[1]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[2]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[3]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[4]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[5]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[6]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[7]));
+  append_field(grid, &x, &y, 128, label);
+
+  // destination address
+  sprintf(label, "Destination Address: %04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x", htons(ipv6->ip6_dst.__in6_u.__u6_addr16[0]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[1]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[2]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[3]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[4]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[5]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[6]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[7]));
+  append_field(grid, &x, &y, 128, label);
+
+  while (ipv6_nh == IPPROTO_HOPOPTS) {
+    // next header
+    ipv6_nh = options[0];
+    sprintf(label, "Next Header: %u", ipv6_nh);
+    append_field(grid, &x, &y, sizeof(ipv6->ip6_ctlun.ip6_un1.ip6_un1_nxt)*8, label);
+
+    // options length
+    hoplen = options[1];
+    sprintf(label, "Length: %u (%u bytes)", hoplen, hoplen*8);
+    append_field(grid, &x, &y, 8, label);
+    options += 2;
+
+    left = hoplen*8 + 6;
+    while (left > 0) {
+      opttype = options[0];
+      sprintf(label, "Type: %u", opttype);
+      append_field(grid, &x, &y, 8, label);
+
+      optlen = options[1];
+      sprintf(label, "Length: %u", optlen);
+      append_field(grid, &x, &y, 8, label);
+
+      if (optlen > 0) {
+        optdata = malloc(optlen*2+1);
+
+        for (i=0; i<optlen; ++i) sprintf(&optdata[i*2], "%02x", (unsigned int)options[i+2]);
+        optdata[optlen*2] = 0x00;
+
+        sprintf(label, "Data: 0x%s", optdata);
+        append_field(grid, &x, &y, optlen*8, label);
+
+        free(optdata);
+      }
+
+      options += 2 + optlen;
+      left -= 2 + optlen;
+    }
+
   }
 
   // free memory of label

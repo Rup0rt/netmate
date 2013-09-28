@@ -11,6 +11,7 @@
   #include <netinet/if_ether.h>
   #include <net/if_arp.h>
   #include <netinet/ip.h>
+  #include <netinet/ip6.h>
   #include <netinet/ip_icmp.h>
   #include <netinet/tcp.h>
   #include <netinet/udp.h>
@@ -176,6 +177,7 @@ void display_packet(GtkWidget *widget, gpointer data) {
   struct sll_header *sll;		// sll header (linux cooked)
   struct arphdr *arp;
   struct iphdr *ipv4;			// ipv4_header pointer
+  struct ip6_hdr *ipv6;
   struct tcphdr *tcp;
   struct udphdr *udp;
   struct icmphdr *icmp;
@@ -274,6 +276,13 @@ void display_packet(GtkWidget *widget, gpointer data) {
 
           break;
       }
+      break;
+    case ETHERTYPE_IPV6:
+      // IPV6
+      ipv6 = (struct ip6_hdr*)layer3ptr;
+
+      // display ipv4 tab
+      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(ipv6_grid(ipv6, ((u_char*)ipv6 + sizeof(struct ip6_hdr)))), gtk_label_new("IPv6"));
 
       break;
   }
@@ -309,6 +318,7 @@ void openpcapfile(GtkWidget *widget, gpointer data) {
 void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **source, char **destination) {
   struct ether_header *eth;
   struct iphdr *ipv4;                   // ipv4_header pointer
+  struct ip6_hdr *ipv6;
   struct sll_header *sll;               // sll header (linux cooked)
   unsigned short layer3 = 0;
   void *layer3ptr = NULL;
@@ -387,6 +397,13 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **sour
           break;
       }
 
+      break;
+    case ETHERTYPE_IPV6:
+      ipv6 = (struct ip6_hdr*)layer3ptr;
+
+      sprintf(*protocol, "IPv6");
+      sprintf(*source, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x", htons(ipv6->ip6_src.__in6_u.__u6_addr16[0]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[1]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[2]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[3]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[4]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[5]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[6]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[7]));
+      sprintf(*destination, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x", htons(ipv6->ip6_dst.__in6_u.__u6_addr16[0]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[1]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[2]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[3]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[4]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[5]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[6]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[7]));
       break;
   }
 }
