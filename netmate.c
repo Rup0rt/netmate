@@ -11,6 +11,7 @@
   #include <netinet/if_ether.h>
   #include <net/if_arp.h>
   #include <netinet/ip.h>
+  #include <netinet/ip_icmp.h>
   #include <netinet/tcp.h>
   #include <netinet/udp.h>
 #endif
@@ -177,6 +178,7 @@ void display_packet(GtkWidget *widget, gpointer data) {
   struct iphdr *ipv4;			// ipv4_header pointer
   struct tcphdr *tcp;
   struct udphdr *udp;
+  struct icmphdr *icmp;
   int i = 1;				// loop counter to track packet
   unsigned short layer3 = 0;
   void *layer3ptr = NULL;
@@ -253,6 +255,12 @@ void display_packet(GtkWidget *widget, gpointer data) {
       gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(ipv4_grid(ipv4, ((u_char*)ipv4 + sizeof(struct iphdr)))), gtk_label_new("IPv4"));
 
       switch (ipv4->protocol) {
+        case IPPROTO_ICMP:
+          icmp = (struct icmphdr*)(layer3ptr + sizeof(struct iphdr));
+
+          gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(icmp_grid(icmp, ((u_char*)icmp + sizeof(struct icmphdr)), htons(ipv4->tot_len)-(ipv4->ihl*4))), gtk_label_new("ICMP"));
+
+          break;
         case IPPROTO_TCP:
           tcp = (struct tcphdr*)(layer3ptr + sizeof(struct iphdr));
 
@@ -359,6 +367,12 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **sour
       sprintf(*destination, "%u.%u.%u.%u", ipv4->daddr & 0xff, (ipv4->daddr >> 8) & 0xff, (ipv4->daddr >> 16) & 0xff, (ipv4->daddr >> 24) & 0xff);
 
       switch (ipv4->protocol) {
+        case IPPROTO_ICMP:
+//          icmp = (struct icmphdr*)(layer3ptr + sizeof(struct iphdr));
+
+          sprintf(*protocol, "ICMP");
+
+          break;
         case IPPROTO_TCP:
 //          tcp = (struct tcphdr*)(layer3ptr + sizeof(struct iphdr));
 

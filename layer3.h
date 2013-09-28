@@ -4,6 +4,7 @@
 
 GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options);	// ipv4 (type 0x0800)
 GtkGrid *arp_grid(struct arphdr *arp, u_char *options);		// arp (type 0x0806)
+GtkGrid *icmp_grid(struct icmphdr *icmp, u_char *options, int left);	// icmp (type 0x01)
 
 ///////////////////////////////////////////////////////////////////////////////////
 
@@ -233,6 +234,83 @@ GtkGrid *arp_grid(struct arphdr *arp, u_char *options) {
   sprintf(label, "Target Protocol Address: %u.%u.%u.%u", options[0], options[1], options[2], options[3]);
   append_field(grid, &x, &y, 32, label);
   options += 4;
+
+  // free memory of label
+  free(label);
+
+  // show ethernet grid (tab)
+  gtk_widget_show_all(GTK_WIDGET(grid));
+
+  // pass grid back to tab builder function
+  return(grid);
+}
+
+GtkGrid *icmp_grid(struct icmphdr *icmp, u_char *options, int left) {
+  GtkGrid *grid;	// the grid itself
+  char *label;		// label of buttons to set
+  int x,y;		// position pointer to next empty grid cell
+  int i;
+  int optlen;
+  char *optdata;
+
+  // init new empty grid
+  grid = GTK_GRID(gtk_grid_new());
+
+  // set columns to be uniform sized (for better bit size representation)
+  gtk_grid_set_column_homogeneous(grid, TRUE);
+
+  // allocate memory for button label
+  label = malloc(100);
+
+  // build bit indication topic line (0 1 2 .. 31)
+  for (x=0; x<32; x++) {
+    sprintf(label, "%u", x);
+    gtk_grid_attach(grid, gtk_label_new(label), x, 0, 1, 1);
+  }
+
+  // set cell pointer to next empty grid cell
+  x=0;
+  y=1;
+
+  // type
+  sprintf(label, "Type: %u", icmp->type);
+  append_field(grid, &x, &y, sizeof(icmp->type)*8, label);
+
+  // code
+  sprintf(label, "Code: %u", icmp->code);
+  append_field(grid, &x, &y, sizeof(icmp->code)*8, label);
+
+  // checksum
+  sprintf(label, "Checksum: 0x%04x", htons(icmp->checksum));
+  append_field(grid, &x, &y, sizeof(icmp->checksum)*8, label);
+
+  // unused
+  sprintf(label, "Unused: 0x%08x", htonl(icmp->un.gateway));
+  append_field(grid, &x, &y, sizeof(icmp->un)*8, label);
+
+  left -= 8;
+
+  // allocate memory for option data
+  optdata = malloc(10);
+
+  // progress bytes until no option bytes left
+  while (left > 0) {
+    if (left >= 4) optlen = 4; else optlen = left;
+
+    // print bytes in hex format into array
+    for (i=0; i<optlen; ++i) sprintf(&optdata[i*2], "%02x", (unsigned int)options[i]);
+    optdata[optlen*2] = 0x00;
+
+    // option data field
+    sprintf(label, "Data 0x%s", optdata);
+    append_field(grid, &x, &y, optlen*8, label);
+
+    options += optlen;
+    left -= optlen;
+  }
+
+  // free data
+  free(optdata);
 
   // free memory of label
   free(label);
