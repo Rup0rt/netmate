@@ -1,7 +1,8 @@
-netmate Changelog
-*****************
+2013-10-03  Robert Krause  <Ruport@web.de>
 
-0.16 - 03.10.2013
------------------
-* Initial Changelog
+ * Initial Changelog
+ * removed external GUI (netmate.ui)
+ * minor fixes
+
+
 

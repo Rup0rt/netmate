@@ -334,6 +334,7 @@ void openpcapfile(GtkWidget *widget, gpointer data) {
      				      NULL));
   gtk_window_resize(GTK_WINDOW(fileopendialog), 1000, 500);
 
+
   if (gtk_dialog_run (GTK_DIALOG (fileopendialog)) == GTK_RESPONSE_ACCEPT) {
     filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (fileopendialog));
     loadpcapfile(widget, GTK_LIST_STORE(data));
@@ -350,8 +351,11 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **sour
   unsigned short nextproto = 0;
   char *nextptr = NULL;
 
+
+  *protocol = malloc(100);
   *source = malloc(100);
   *destination = malloc(100);
+  memset(*protocol, 0, 100);
   memset(*source, 0, 100);
   memset(*destination, 0, 100);
 
@@ -480,7 +484,6 @@ void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore) {
   char *destination;
   char *protocol;
 
-
   /* clear all items */
   gtk_list_store_clear(packetliststore);
 
@@ -541,8 +544,14 @@ void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore) {
 
 /* MAIN FUNCTION */
 int main (int argc, char *argv[]) {
-  GtkBuilder *builder;			/* the GUI builder object */
   GtkWindow *mainwindow;		/* main window object */
+  GtkBox *mainbox;
+  GtkMenuBar *topmenubar;
+  GtkScrolledWindow *packetscrolledwindow;
+  GtkMenuItem *filemenuitem;
+  GtkMenu *filemenu;
+  GtkTreeViewColumn *packetnumbertreeviewcolumn, *timetreeviewcolumn, *protocoltreeviewcolumn, *sourcetreeviewcolumn, *destinationtreeviewcolumn;
+  GtkCellRendererText *packetnumbercellrenderertext, *timecellrenderertext, *protocolcellrenderertext, *sourcecellrenderertext, *destinationcellrenderertext;
   GtkListStore *packetliststore;	/* list store for packets */
   GtkTreeView *packettreeview;		/* tree view for packets */
   GtkImageMenuItem *openimagemenuitem;	/* file open menu */
@@ -552,33 +561,78 @@ int main (int argc, char *argv[]) {
   /* init GTK with console parameters (change to getopts later) */
   gtk_init(NULL, NULL);
 
-  /* load UI descriptions from file */
-  builder = gtk_builder_new ();
-  gtk_builder_add_from_file(builder, "netmate.ui", NULL);
-  /* for fileless compiling (gtk_builder_add_from_string) */
+  /* init packet list store (database) */
+  packetliststore = GTK_LIST_STORE(gtk_list_store_new (5, G_TYPE_INT, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING));
 
   /* init main window */
-  mainwindow = GTK_WINDOW(gtk_builder_get_object (builder, "mainwindow"));
+  mainwindow = GTK_WINDOW(gtk_window_new(GTK_WINDOW_TOPLEVEL));
+  gtk_widget_set_visible(GTK_WIDGET(mainwindow), TRUE);
+  gtk_window_set_position(mainwindow, GTK_WIN_POS_CENTER_ALWAYS);
   g_signal_connect(mainwindow, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
-  /* init packet list store (database) */
-  packetliststore = GTK_LIST_STORE(gtk_builder_get_object (builder, "packetliststore"));
-
-  /* init protocol header field(s) */
-  protocolheadernotebook = GTK_NOTEBOOK(gtk_builder_get_object (builder, "protocolheadernotebook"));
-
+  mainbox = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 0));
+  gtk_container_add(GTK_CONTAINER(mainwindow), GTK_WIDGET(mainbox));
+  
+  topmenubar = GTK_MENU_BAR(gtk_menu_bar_new());
+  filemenuitem = GTK_MENU_ITEM(gtk_menu_item_new_with_label("File"));
+  
+  filemenu = GTK_MENU(gtk_menu_new());
+  
   /* init open file menu */
-  openimagemenuitem = GTK_IMAGE_MENU_ITEM(gtk_builder_get_object (builder, "openimagemenuitem"));
+  openimagemenuitem = GTK_IMAGE_MENU_ITEM(gtk_image_menu_item_new_from_stock("gtk-open", NULL));
   g_signal_connect(openimagemenuitem, "activate", G_CALLBACK(openpcapfile), packetliststore);
 
+  gtk_container_add(GTK_CONTAINER(filemenu), GTK_WIDGET(openimagemenuitem));
+
+  gtk_container_add(GTK_CONTAINER(filemenu), gtk_separator_menu_item_new());
+
   /* init quit menu */
-  quitimagemenuitem = GTK_IMAGE_MENU_ITEM(gtk_builder_get_object (builder, "quitimagemenuitem"));
+  quitimagemenuitem = GTK_IMAGE_MENU_ITEM(gtk_image_menu_item_new_from_stock("gtk-quit", NULL));
   g_signal_connect(quitimagemenuitem, "activate", G_CALLBACK(gtk_main_quit), NULL);
 
-  /* init packet tree view (database representation) */
-  packettreeview = GTK_TREE_VIEW(gtk_builder_get_object (builder, "packettreeview"));
+  gtk_container_add(GTK_CONTAINER(filemenu), GTK_WIDGET(quitimagemenuitem));
+  
+  gtk_menu_item_set_submenu(filemenuitem, GTK_WIDGET(filemenu));
+  
+  gtk_container_add(GTK_CONTAINER(topmenubar), GTK_WIDGET(filemenuitem));
+
+  gtk_box_pack_start(mainbox, GTK_WIDGET(topmenubar), FALSE, TRUE, 0);
+
+	packetscrolledwindow = GTK_SCROLLED_WINDOW(gtk_scrolled_window_new(NULL, NULL));
+  gtk_widget_set_size_request(GTK_WIDGET(packetscrolledwindow), 800, 400);
+
+  packettreeview = GTK_TREE_VIEW(gtk_tree_view_new_with_model(GTK_TREE_MODEL(packetliststore)));
   g_signal_connect (packettreeview, "cursor-changed", G_CALLBACK(display_packet), NULL);
 
+  packetnumbercellrenderertext = GTK_CELL_RENDERER_TEXT(gtk_cell_renderer_text_new());
+  packetnumbertreeviewcolumn = gtk_tree_view_column_new_with_attributes("No.", GTK_CELL_RENDERER(packetnumbercellrenderertext), "text", 0, NULL);
+  gtk_tree_view_append_column(packettreeview, packetnumbertreeviewcolumn);
+
+  timecellrenderertext = GTK_CELL_RENDERER_TEXT(gtk_cell_renderer_text_new());
+  timetreeviewcolumn = gtk_tree_view_column_new_with_attributes("Time", GTK_CELL_RENDERER(timecellrenderertext), "text", 1, NULL);
+  gtk_tree_view_append_column(packettreeview, timetreeviewcolumn);
+  
+  protocolcellrenderertext = GTK_CELL_RENDERER_TEXT(gtk_cell_renderer_text_new());
+  protocoltreeviewcolumn = gtk_tree_view_column_new_with_attributes("Protocol", GTK_CELL_RENDERER(protocolcellrenderertext), "text", 2, NULL);
+  gtk_tree_view_append_column(packettreeview, protocoltreeviewcolumn);
+
+  sourcecellrenderertext = GTK_CELL_RENDERER_TEXT(gtk_cell_renderer_text_new());
+  sourcetreeviewcolumn = gtk_tree_view_column_new_with_attributes("Source", GTK_CELL_RENDERER(sourcecellrenderertext), "text", 3, NULL);
+  gtk_tree_view_append_column(packettreeview, sourcetreeviewcolumn);
+
+  destinationcellrenderertext = GTK_CELL_RENDERER_TEXT(gtk_cell_renderer_text_new());
+  destinationtreeviewcolumn = gtk_tree_view_column_new_with_attributes("Destination", GTK_CELL_RENDERER(destinationcellrenderertext), "text", 4, NULL);
+  gtk_tree_view_append_column(packettreeview, destinationtreeviewcolumn);
+
+  gtk_container_add(GTK_CONTAINER(packetscrolledwindow), GTK_WIDGET(packettreeview));
+  gtk_box_pack_start(mainbox, GTK_WIDGET(packetscrolledwindow), FALSE, TRUE, 0);
+
+  /* init protocol header field */
+  protocolheadernotebook = GTK_NOTEBOOK(gtk_notebook_new());
+  gtk_box_pack_start(mainbox, GTK_WIDGET(protocolheadernotebook), FALSE, TRUE, 0);
+
+  gtk_widget_show_all(GTK_WIDGET(mainwindow));
+   
   /* set title of main window */
   title = malloc(100);
   sprintf(title, "NetMate v%s", VERSION);
