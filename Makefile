@@ -1,2 +1,2 @@
 all:
-	gcc netmate.c -o netmate `pkg-config --cflags --libs gtk+-3.0` -lpcap -Wall
+	gcc netmate.c -o netmate -Wall -Wextra -pedantic `pkg-config --cflags --libs gtk+-3.0` -lpcap
