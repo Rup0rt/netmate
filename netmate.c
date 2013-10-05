@@ -30,7 +30,7 @@ void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore);
 void append_field(GtkGrid *grid, int *x, int *y, int size, char *label);
 void display_packet(GtkWidget *widget);
 void openpcapfile(GtkWidget *widget, gpointer data);
-void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **source, char **destination);
+void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **flags, char **source, char **sport, char **destination, char **dport);
 
 #include "layer2.h"
 #include "layer3.h"
@@ -343,21 +343,28 @@ void openpcapfile(GtkWidget *widget, gpointer data) {
   gtk_widget_destroy(GTK_WIDGET(fileopendialog));
 }
 
-void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **source, char **destination) {
+void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **flags, char **source, char **sport, char **destination, char **dport) {
   struct ether_header *eth;
   struct iphdr *ipv4;                   /* ipv4_header pointer */
+  struct tcphdr *tcp;
+  struct udphdr *udp;
   struct ip6_hdr *ipv6;
   struct sll_header *sll;               /* sll header (linux cooked) */
   unsigned short nextproto = 0;
   char *nextptr = NULL;
 
-
   *protocol = malloc(100);
   *source = malloc(100);
+  *sport = malloc(100);
   *destination = malloc(100);
+  *dport = malloc(100);
+  *flags = malloc(100);
   memset(*protocol, 0, 100);
   memset(*source, 0, 100);
+  memset(*sport, 0, 100);
   memset(*destination, 0, 100);
+  memset(*dport, 0, 100);
+  memset(*flags, 0, 100);
 
   sprintf(*protocol, "UNKNOWN");
 
@@ -393,9 +400,7 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **sour
   switch (nextproto) {
 		case ETHERTYPE_ARP:
       /* ARP */
-/*
-      arp = (struct arphdr*)nextptr;
-*/
+/*      arp = (struct arphdr*)nextptr;*/
       nextproto = 0xffff;
 
       sprintf(*protocol, "ARP");
@@ -408,9 +413,19 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **sour
       nextptr += sizeof(struct iphdr);
       nextproto = ipv4->protocol;
 
-      sprintf(*protocol, "IPv4");
+      sprintf(*protocol, "%s", "IPv4");
       sprintf(*source, "%u.%u.%u.%u", ipv4->saddr & 0xff, (ipv4->saddr >> 8) & 0xff, (ipv4->saddr >> 16) & 0xff, (ipv4->saddr >> 24) & 0xff);
       sprintf(*destination, "%u.%u.%u.%u", ipv4->daddr & 0xff, (ipv4->daddr >> 8) & 0xff, (ipv4->daddr >> 16) & 0xff, (ipv4->daddr >> 24) & 0xff);
+
+      /* reserved flag */
+      if (ipv4->frag_off & htons(IP_RF)) strcat(*flags, "RF ");
+
+      /* dont fragment flag */
+      if (ipv4->frag_off & htons(IP_DF)) strcat(*flags, "DF ");
+
+      /* more fragments flag */
+      if (ipv4->frag_off & htons(IP_MF)) strcat(*flags, "MF ");
+
       break;
     case ETHERTYPE_IPV6:
       ipv6 = (struct ip6_hdr*)nextptr;
@@ -433,35 +448,58 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **sour
   if (nextproto != 0xffff) {
     switch (nextproto) {
       case IPPROTO_ICMP:
-/*
-        icmp = (struct icmphdr*)(nextptr + sizeof(struct iphdr));
-*/
+/*      icmp = (struct icmphdr*)nextptr;*/
 
-        sprintf(*protocol, "ICMP");
+        sprintf(*protocol, "%s", "ICMP");
 
         break;
       case IPPROTO_ICMPV6:
-/*
-        icmp = (struct icmphdr*)(nextptr + sizeof(struct iphdr));
-*/
+/*        icmp = (struct icmphdr*)nextptr;*/
 
-        sprintf(*protocol, "ICMPv6");
+        sprintf(*protocol, "%s", "ICMPv6");
 
         break;
       case IPPROTO_TCP:
-/*
-        tcp = (struct tcphdr*)(nextptr + sizeof(struct iphdr));
-*/
+        tcp = (struct tcphdr*)nextptr;
 
-        sprintf(*protocol, "TCP");
+        sprintf(*protocol, "%s", "TCP");
+        sprintf(*sport, "%u", htons(tcp->source));
+        sprintf(*dport, "%u", htons(tcp->dest));
+
+        /* NS */
+        if (tcp->res1 & 0x01) strcat(*flags, "NS ");
+
+        /* CWR */
+        if (tcp->res2 & 0x02) strcat(*flags, "CWR ");
+
+        /* ECE */
+        if (tcp->res2 & 0x01) strcat(*flags, "ECE ");
+
+        /* URG */
+        if (tcp->urg) strcat(*flags, "URG ");
+
+        /* ACK */
+        if (tcp->ack) strcat(*flags, "ACK ");
+
+        /* PSH */
+        if (tcp->psh) strcat(*flags, "PSH ");
+
+        /* RST */
+        if (tcp->rst) strcat(*flags, "RST ");
+
+        /* SYN */
+        if (tcp->syn) strcat(*flags, "SYN ");
+
+        /* FIN */
+        if (tcp->fin) strcat(*flags, "FIN ");
 
         break;
       case IPPROTO_UDP:
-/*
-        udp = (struct udphdr*)(nextptr + sizeof(struct iphdr));
-*/
+        udp = (struct udphdr*)nextptr;
 
         sprintf(*protocol, "UDP");
+        sprintf(*sport, "%u", htons(udp->source));
+        sprintf(*dport, "%u", htons(udp->dest));
 
         break;
     }
@@ -480,9 +518,12 @@ void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore) {
   long realtime;
   long realutime;
   char *pcaptime = malloc(20);
-  char *source;
-  char *destination;
   char *protocol;
+  char *source;
+  char *sport;
+  char *destination;
+  char *dport;
+  char *flags;
 
   /* clear all items */
   gtk_list_store_clear(packetliststore);
@@ -528,10 +569,10 @@ void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore) {
     }
 
     sprintf(pcaptime, "%ld.%06ld", realtime, realutime);
-    getinfo(handler, packet, &protocol, &source, &destination);
+    getinfo(handler, packet, &protocol, &flags, &source, &sport, &destination, &dport);
 
     /* insert new row into tree view */
-    gtk_list_store_insert_with_values(packetliststore, &iter, -1, 0,  i++, 1, pcaptime, 2, protocol, 3, source, 4, destination, -1);
+    gtk_list_store_insert_with_values(packetliststore, &iter, -1, 0,  i++, 1, pcaptime, 2, protocol, 3, flags, 4, source, 5, sport, 6, destination, 7, dport, -1);
   }
 
   free(pcaptime);
@@ -550,8 +591,8 @@ int main (int argc, char *argv[]) {
   GtkScrolledWindow *packetscrolledwindow;
   GtkMenuItem *filemenuitem;
   GtkMenu *filemenu;
-  GtkTreeViewColumn *packetnumbertreeviewcolumn, *timetreeviewcolumn, *protocoltreeviewcolumn, *sourcetreeviewcolumn, *destinationtreeviewcolumn;
-  GtkCellRendererText *packetnumbercellrenderertext, *timecellrenderertext, *protocolcellrenderertext, *sourcecellrenderertext, *destinationcellrenderertext;
+  GtkTreeViewColumn *packetnumbertreeviewcolumn, *timetreeviewcolumn, *protocoltreeviewcolumn, *sourcetreeviewcolumn, *destinationtreeviewcolumn, *sporttreeviewcolumn, *dporttreeviewcolumn, *flagstreeviewcolumn;
+  GtkCellRendererText *packetnumbercellrenderertext, *timecellrenderertext, *protocolcellrenderertext, *sourcecellrenderertext, *destinationcellrenderertext, *sportcellrenderertext, *dportcellrenderertext, *flagscellrenderertext;
   GtkListStore *packetliststore;	/* list store for packets */
   GtkTreeView *packettreeview;		/* tree view for packets */
   GtkImageMenuItem *openimagemenuitem;	/* file open menu */
@@ -562,22 +603,21 @@ int main (int argc, char *argv[]) {
   gtk_init(NULL, NULL);
 
   /* init packet list store (database) */
-  packetliststore = GTK_LIST_STORE(gtk_list_store_new (5, G_TYPE_INT, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING));
+  packetliststore = GTK_LIST_STORE(gtk_list_store_new (8, G_TYPE_INT, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING));
 
   /* init main window */
   mainwindow = GTK_WINDOW(gtk_window_new(GTK_WINDOW_TOPLEVEL));
-  gtk_widget_set_visible(GTK_WIDGET(mainwindow), TRUE);
   gtk_window_set_position(mainwindow, GTK_WIN_POS_CENTER_ALWAYS);
   g_signal_connect(mainwindow, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
   mainbox = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 0));
   gtk_container_add(GTK_CONTAINER(mainwindow), GTK_WIDGET(mainbox));
-  
+
   topmenubar = GTK_MENU_BAR(gtk_menu_bar_new());
   filemenuitem = GTK_MENU_ITEM(gtk_menu_item_new_with_label("File"));
-  
+
   filemenu = GTK_MENU(gtk_menu_new());
-  
+
   /* init open file menu */
   openimagemenuitem = GTK_IMAGE_MENU_ITEM(gtk_image_menu_item_new_from_stock("gtk-open", NULL));
   g_signal_connect(openimagemenuitem, "activate", G_CALLBACK(openpcapfile), packetliststore);
@@ -591,9 +631,9 @@ int main (int argc, char *argv[]) {
   g_signal_connect(quitimagemenuitem, "activate", G_CALLBACK(gtk_main_quit), NULL);
 
   gtk_container_add(GTK_CONTAINER(filemenu), GTK_WIDGET(quitimagemenuitem));
-  
+
   gtk_menu_item_set_submenu(filemenuitem, GTK_WIDGET(filemenu));
-  
+
   gtk_container_add(GTK_CONTAINER(topmenubar), GTK_WIDGET(filemenuitem));
 
   gtk_box_pack_start(mainbox, GTK_WIDGET(topmenubar), FALSE, TRUE, 0);
@@ -606,23 +646,43 @@ int main (int argc, char *argv[]) {
 
   packetnumbercellrenderertext = GTK_CELL_RENDERER_TEXT(gtk_cell_renderer_text_new());
   packetnumbertreeviewcolumn = gtk_tree_view_column_new_with_attributes("No.", GTK_CELL_RENDERER(packetnumbercellrenderertext), "text", 0, NULL);
+  gtk_tree_view_column_set_resizable(packetnumbertreeviewcolumn, TRUE);
   gtk_tree_view_append_column(packettreeview, packetnumbertreeviewcolumn);
 
   timecellrenderertext = GTK_CELL_RENDERER_TEXT(gtk_cell_renderer_text_new());
   timetreeviewcolumn = gtk_tree_view_column_new_with_attributes("Time", GTK_CELL_RENDERER(timecellrenderertext), "text", 1, NULL);
+  gtk_tree_view_column_set_resizable(timetreeviewcolumn, TRUE);
   gtk_tree_view_append_column(packettreeview, timetreeviewcolumn);
-  
+
   protocolcellrenderertext = GTK_CELL_RENDERER_TEXT(gtk_cell_renderer_text_new());
   protocoltreeviewcolumn = gtk_tree_view_column_new_with_attributes("Protocol", GTK_CELL_RENDERER(protocolcellrenderertext), "text", 2, NULL);
+  gtk_tree_view_column_set_resizable(protocoltreeviewcolumn, TRUE);
   gtk_tree_view_append_column(packettreeview, protocoltreeviewcolumn);
 
+  flagscellrenderertext = GTK_CELL_RENDERER_TEXT(gtk_cell_renderer_text_new());
+  flagstreeviewcolumn = gtk_tree_view_column_new_with_attributes("Flags", GTK_CELL_RENDERER(flagscellrenderertext), "text", 3, NULL);
+  gtk_tree_view_column_set_resizable(flagstreeviewcolumn, TRUE);
+  gtk_tree_view_append_column(packettreeview, flagstreeviewcolumn);
+
   sourcecellrenderertext = GTK_CELL_RENDERER_TEXT(gtk_cell_renderer_text_new());
-  sourcetreeviewcolumn = gtk_tree_view_column_new_with_attributes("Source", GTK_CELL_RENDERER(sourcecellrenderertext), "text", 3, NULL);
+  sourcetreeviewcolumn = gtk_tree_view_column_new_with_attributes("Source", GTK_CELL_RENDERER(sourcecellrenderertext), "text", 4, NULL);
+  gtk_tree_view_column_set_resizable(sourcetreeviewcolumn, TRUE);
   gtk_tree_view_append_column(packettreeview, sourcetreeviewcolumn);
 
+  sportcellrenderertext = GTK_CELL_RENDERER_TEXT(gtk_cell_renderer_text_new());
+  sporttreeviewcolumn = gtk_tree_view_column_new_with_attributes("S.port", GTK_CELL_RENDERER(sportcellrenderertext), "text", 5, NULL);
+  gtk_tree_view_column_set_resizable(sporttreeviewcolumn, TRUE);
+  gtk_tree_view_append_column(packettreeview, sporttreeviewcolumn);
+
   destinationcellrenderertext = GTK_CELL_RENDERER_TEXT(gtk_cell_renderer_text_new());
-  destinationtreeviewcolumn = gtk_tree_view_column_new_with_attributes("Destination", GTK_CELL_RENDERER(destinationcellrenderertext), "text", 4, NULL);
+  destinationtreeviewcolumn = gtk_tree_view_column_new_with_attributes("Destination", GTK_CELL_RENDERER(destinationcellrenderertext), "text", 6, NULL);
+  gtk_tree_view_column_set_resizable(destinationtreeviewcolumn, TRUE);
   gtk_tree_view_append_column(packettreeview, destinationtreeviewcolumn);
+
+  dportcellrenderertext = GTK_CELL_RENDERER_TEXT(gtk_cell_renderer_text_new());
+  dporttreeviewcolumn = gtk_tree_view_column_new_with_attributes("D.port", GTK_CELL_RENDERER(dportcellrenderertext), "text", 7, NULL);
+  gtk_tree_view_column_set_resizable(dporttreeviewcolumn, TRUE);
+  gtk_tree_view_append_column(packettreeview, dporttreeviewcolumn);
 
   gtk_container_add(GTK_CONTAINER(packetscrolledwindow), GTK_WIDGET(packettreeview));
   gtk_box_pack_start(mainbox, GTK_WIDGET(packetscrolledwindow), FALSE, TRUE, 0);
@@ -631,8 +691,9 @@ int main (int argc, char *argv[]) {
   protocolheadernotebook = GTK_NOTEBOOK(gtk_notebook_new());
   gtk_box_pack_start(mainbox, GTK_WIDGET(protocolheadernotebook), FALSE, TRUE, 0);
 
+  gtk_widget_set_visible(GTK_WIDGET(mainwindow), TRUE);
   gtk_widget_show_all(GTK_WIDGET(mainwindow));
-   
+
   /* set title of main window */
   title = malloc(100);
   sprintf(title, "NetMate v%s", VERSION);
