@@ -1,6 +1,11 @@
+2013-10-08  Robert Krause  <Ruport@web.de>
+
+ * improved Makefile
+ * minor bug fixes
+
 2013-10-05  Robert Krause  <Ruport@web.de>
 
- * Initial Changelog
+ * initial changelog
  * added columns source port, destination port, flags
  * columns are resizeable now
  * removed external GUI (netmate.ui)

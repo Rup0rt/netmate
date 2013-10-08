@@ -19,7 +19,7 @@
 #endif
 
 /* THE VERSION OF NETMATE */
-#define VERSION "0.16"
+#define VERSION "0.17"
 
 /* ADDITIONAL LINK TYPES */
 #define LINKTYPE_LINUX_SLL 113
@@ -174,15 +174,15 @@ void display_packet(GtkWidget *widget) {
   struct pcap_pkthdr *header;		/* the header from libpcap */
   const u_char *packet;			/* current packet pointer */
   unsigned int packetnumber;		/* currently secected packet number */
-  struct ether_header *eth;
-  struct sll_header *sll;		/* sll header (linux cooked) */
-  struct arphdr *arp;
-  struct iphdr *ipv4;			/* ipv4_header pointer */
-  struct ip6_hdr *ipv6;
-  struct icmphdr *icmp;
-  struct icmp6_hdr *icmpv6;
-  struct tcphdr *tcp;
-  struct udphdr *udp;
+  struct ether_header *eth = NULL;
+  struct sll_header *sll = NULL;	/* sll header (linux cooked) */
+  struct arphdr *arp = NULL;
+  struct iphdr *ipv4 = NULL;		/* ipv4_header pointer */
+  struct ip6_hdr *ipv6 = NULL;
+  struct icmphdr *icmp = NULL;
+  struct icmp6_hdr *icmpv6 = NULL;
+  struct tcphdr *tcp = NULL;
+  struct udphdr *udp = NULL;
   unsigned int i = 1;			/* loop counter to track packet */
   unsigned short nextproto = 0;
   char *nextptr = NULL;
