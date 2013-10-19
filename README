@@ -14,7 +14,7 @@ It was inspired by netdude, that is not further developed any more.
 
 Currently the following network protocols are supported:
 - Layer 2: Ethernet, SLL (Linux Cooked)
-- Layer 3: ARP, ICMP, ICPMv6, IPv4, IPv6
+- Layer 3: ARP, ICMP, ICMPv6, IPv4, IPv6
 - Layer 4: TCP, UDP
 
 This tool is still under development! Please send any further wishes, feature
