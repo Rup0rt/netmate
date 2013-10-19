@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Netmate
+GenericName=Netmate
+Comment=shows pcap dump lines in network header style
+Icon=netmate.xpm
+Exec=netmate
+Terminal=false
+StartupNotify=false
+Categories=Science;DataVisualization
+Keywords=net;network;learning;TCP/IP;IPv4;IPv6;TCP;UDP;ICMP
