@@ -1,0 +1,59 @@
+.TH NETMATE 1 "19 OCT 2013"
+
+.SH "NAME"
+netmate \- displays network protocol headers in uniform RFC like format
+
+.SH "SYNOPSIS"
+\fBnetmate\fP filename
+
+.SH "DESCRIPTION"
+Netmate is a GTK+ program that shows network protocols headers in 32-bit aligned fields, identical as they are represented in Request for Comments (RFCs).
+It can be used to learn and teach about network protocols and to understand their functionality and collaboration.
+
+This tool supports input files in pcap(ng) format as they are created by tcpdump, wireshark or other code based on libpcap.
+
+Netmate is written in C and released under the GNU General Public License.
+It was inspired by netdude, that is not further developed any more.
+
+Currently the following network protocols are supported:
+.br
+\- Layer 2: Ethernet, SLL (Linux Cooked)
+.br
+\- Layer 3: ARP, ICMP, ICPMv6, IPv4, IPv6
+.br
+\- Layer 4: TCP, UDP
+
+.SH "DEVELOPMENT"
+This tool is still under development! Please send any further wishes, feature requests or problems in compiling and execution to ruport@f00l.de.
+Also send me any more network protocols you want to be supported in future releases.
+
+For further information visit the netmate homepage at http://f00l.de/netmate/.
+
+.SH "HISTORY"
+.TP 5
+0.1.7 - 19.10.2013
+* improved Makefile
+.br
+* added shortcut and icon
+.br
+* added README and man-page
+.br
+ * minor bug fixes
+.TP
+0.1.6 - 05.10.2013
+.br
+* initial changelog
+.br
+* added columns source port, destination port, flags
+.br
+* columns are resizeable now
+.br
+* removed external GUI (netmate.ui)
+.br
+* minor fixes
+
+.SH "COPYRIGHT"
+Netmate is released under the GNU General Public License.
+
+.SH "AUTHOR"
+Written by Robert Krause <ruport@f00l.de>.

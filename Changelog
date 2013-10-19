@@ -1,6 +1,8 @@
-2013-10-08  Robert Krause  <Ruport@web.de>
+2013-10-19  Robert Krause  <Ruport@web.de>
 
  * improved Makefile
+ * added shortcut and icon
+ * added README and man-page
  * minor bug fixes
 
 2013-10-05  Robert Krause  <Ruport@web.de>

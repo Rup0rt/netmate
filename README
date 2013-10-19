@@ -1,1 +1,29 @@
-netmate - a netdude clone ;)
+netmate v0.1.7 README
+*********************
+
+Netmate is a GTK+ program that shows network protocols headers in 32-bit
+aligned fields, identical as they are represented in Request for Comments
+(RFCs). It can be used to learn and teach about network protocols and to
+understand their functionality and collaboration.
+
+This tool supports input files in pcap(ng) format as they are created by
+tcpdump, wireshark or other code based on libpcap.
+
+Netmate is written in C and released under the GNU General Public License.
+It was inspired by netdude, that is not further developed any more.
+
+Currently the following network protocols are supported:
+- Layer 2: Ethernet, SLL (Linux Cooked)
+- Layer 3: ARP, ICMP, ICPMv6, IPv4, IPv6
+- Layer 4: TCP, UDP
+
+This tool is still under development! Please send any further wishes, feature
+requests or problems in compiling and execution to ruport@f00l.de. Also send
+me any more network protocols you want to be supported in future releases.
+
+For further information visit the netmate homepage at http://f00l.de/netmate/.
+
+USAGE
+=====
+
+./netmate filename
