@@ -16,6 +16,8 @@
   #include <netinet/icmp6.h>
   #include <netinet/tcp.h>
   #include <netinet/udp.h>
+#else
+  #include "win32.h"
 #endif
 
 /* THE VERSION OF NETMATE */
