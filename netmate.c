@@ -21,7 +21,7 @@
 #endif
 
 /* THE VERSION OF NETMATE */
-#define VERSION "0.17"
+#define VERSION "0.18"
 
 /* ADDITIONAL LINK TYPES */
 #define LINKTYPE_LINUX_SLL 113
@@ -597,8 +597,8 @@ int main (int argc, char *argv[]) {
   GtkBox *mainbox;
   GtkMenuBar *topmenubar;
   GtkScrolledWindow *packetscrolledwindow;
-  GtkMenuItem *filemenuitem;
-  GtkMenu *filemenu;
+  GtkMenuItem *filemenuitem, *helpmenuitem, *aboutmenuitem;
+  GtkMenu *filemenu, *helpmenu;
   GtkTreeViewColumn *packetnumbertreeviewcolumn, *timetreeviewcolumn, *protocoltreeviewcolumn, *sourcetreeviewcolumn, *destinationtreeviewcolumn, *sporttreeviewcolumn, *dporttreeviewcolumn, *flagstreeviewcolumn;
   GtkCellRendererText *packetnumbercellrenderertext, *timecellrenderertext, *protocolcellrenderertext, *sourcecellrenderertext, *destinationcellrenderertext, *sportcellrenderertext, *dportcellrenderertext, *flagscellrenderertext;
   GtkListStore *packetliststore;	/* list store for packets */
@@ -643,6 +643,19 @@ int main (int argc, char *argv[]) {
   gtk_menu_item_set_submenu(filemenuitem, GTK_WIDGET(filemenu));
 
   gtk_container_add(GTK_CONTAINER(topmenubar), GTK_WIDGET(filemenuitem));
+
+  helpmenuitem = GTK_MENU_ITEM(gtk_menu_item_new_with_label("Help"));
+  helpmenu = GTK_MENU(gtk_menu_new());
+
+  gtk_menu_item_set_submenu(helpmenuitem, GTK_WIDGET(helpmenu));
+
+  aboutmenuitem = GTK_MENU_ITEM(gtk_menu_item_new_with_label("About"));
+
+  g_signal_connect(aboutmenuitem, "activate", G_CALLBACK(show_information), "NetMate (c) 2013 Robert Krause\n\nPlease report any bugs and feature requests to robert@f00l.de\n\nFor more information visit http://f00l.de/netmate/");
+
+  gtk_container_add(GTK_CONTAINER(helpmenu), GTK_WIDGET(aboutmenuitem));
+
+  gtk_container_add(GTK_CONTAINER(topmenubar), GTK_WIDGET(helpmenuitem));
 
   gtk_box_pack_start(mainbox, GTK_WIDGET(topmenubar), FALSE, TRUE, 0);
 
