@@ -29,11 +29,12 @@
 /**************************************************************************************************/
 
 void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore);
-void append_field(GtkGrid *grid, int *x, int *y, int size, char *label);
+void append_field(GtkGrid *grid, int *x, int *y, int size, char *label, char *tooltip);
 void display_packet(GtkWidget *widget);
 void openpcapfile(GtkWidget *widget, gpointer data);
 void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **flags, char **source, char **sport, char **destination, char **dport);
 
+#include "tooltips.h"
 #include "layer2.h"
 #include "layer3.h"
 #include "layer4.h"
@@ -154,15 +155,20 @@ gint show_question(GtkWidget *widget, gpointer message) {
 
 /**************************************************************************************************/
 
-void append_field(GtkGrid *grid, int *x, int *y, int size, char *label) {
+void append_field(GtkGrid *grid, int *x, int *y, int size, char *label, char *tooltip) {
+  GtkButton *button;
   while (*x + size > 32) {
-    gtk_grid_attach(grid, gtk_button_new_with_label(label), *x, *y, 32-*x, 1);
+    button = GTK_BUTTON(gtk_button_new_with_label(label));
+    if (tooltip != NULL) gtk_widget_set_tooltip_text(GTK_WIDGET(button), tooltip);
+    gtk_grid_attach(grid, GTK_WIDGET(button), *x, *y, 32-*x, 1);
     size -= 32-*x;
     *x = 0;
     *y = *y + 1;
   }
 
-  gtk_grid_attach(grid, gtk_button_new_with_label(label), *x, *y, size, 1);
+  button = GTK_BUTTON(gtk_button_new_with_label(label));
+  if (tooltip != NULL) gtk_widget_set_tooltip_text(GTK_WIDGET(button), tooltip);
+  gtk_grid_attach(grid, GTK_WIDGET(button), *x, *y, size, 1);
   *x = *x + size;
   if (*x == 32) { *x = 0; *y = *y + 1; }
 }

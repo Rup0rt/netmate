@@ -33,23 +33,23 @@ GtkGrid *sll_grid(struct sll_header *sll) {
 
   /* Packet Type */
   sprintf(label, "Packet Type: %u", htons(sll->sll_pkttype));
-  append_field(grid, &x, &y, sizeof(sll->sll_pkttype)*8, label);
+  append_field(grid, &x, &y, sizeof(sll->sll_pkttype)*8, label, SLL_PACKET_TYPE);
 
   /* ARP Header Type */
-  sprintf(label, "ARPHDR_ Type: %u", htons(sll->sll_hatype));
-  append_field(grid, &x, &y, sizeof(sll->sll_hatype)*8, label);
+  sprintf(label, "ARPHRD_ Type: %u", htons(sll->sll_hatype));
+  append_field(grid, &x, &y, sizeof(sll->sll_hatype)*8, label, SLL_ARPHRD_TYPE);
 
   /* Link-layer Address Length */
   sprintf(label, "Link-layer Address Length: %u", htons(sll->sll_halen));
-  append_field(grid, &x, &y, sizeof(sll->sll_halen)*8, label);
+  append_field(grid, &x, &y, sizeof(sll->sll_halen)*8, label, SLL_LLA_LENGTH);
 
   /* Link-layer Address */
   sprintf(label, "Link-layer Address: %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x", sll->sll_addr[0], sll->sll_addr[1], sll->sll_addr[2], sll->sll_addr[3], sll->sll_addr[4], sll->sll_addr[5], sll->sll_addr[6], sll->sll_addr[7]);
-  append_field(grid, &x, &y, sizeof(sll->sll_addr)*8, label);
+  append_field(grid, &x, &y, sizeof(sll->sll_addr)*8, label, SLL_LLA);
 
   /* Upper Layer Protocol */
   sprintf(label, "Protocol Type: 0x%04x", htons(sll->sll_protocol));
-  append_field(grid, &x, &y, sizeof(sll->sll_protocol)*8, label);
+  append_field(grid, &x, &y, sizeof(sll->sll_protocol)*8, label, SLL_PROTOCOL);
 
   /* free memory of label */
   free(label);
@@ -87,15 +87,15 @@ GtkGrid *ethernet_grid(struct ether_header *eth) {
 
   /* destination mac */
   sprintf(label, "Destination: %02x:%02x:%02x:%02x:%02x:%02x", eth->ether_dhost[0], eth->ether_dhost[1], eth->ether_dhost[2], eth->ether_dhost[3], eth->ether_dhost[4], eth->ether_dhost[5]);
-  append_field(grid, &x, &y, sizeof(eth->ether_dhost)*8, label);
+  append_field(grid, &x, &y, sizeof(eth->ether_dhost)*8, label, ETHERNET_DESTINATION);
 
   /* source mac */
   sprintf(label, "Source: %02x:%02x:%02x:%02x:%02x:%02x", eth->ether_shost[0], eth->ether_shost[1], eth->ether_shost[2], eth->ether_shost[3], eth->ether_shost[4], eth->ether_shost[5]);
-  append_field(grid, &x, &y, sizeof(eth->ether_shost)*8, label);
+  append_field(grid, &x, &y, sizeof(eth->ether_shost)*8, label, ETHERNET_DESTINATION);
 
   /* upper layer protocol */
   sprintf(label, "Type: 0x%04x", htons(eth->ether_type));
-  append_field(grid, &x, &y, sizeof(eth->ether_type)*8, label);
+  append_field(grid, &x, &y, sizeof(eth->ether_type)*8, label, ETHERNET_TYPE);
 
   /* free memory of label */
   free(label);
