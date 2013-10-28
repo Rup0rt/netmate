@@ -49,3 +49,28 @@
 #define IPV6_OPTION_TYPE "Option Type\n\n8-bit identifier of the type of option.\n\n[RFC2460]"
 #define IPV6_OPTION_LENGTH "Option Length\n\n8-bit unsigned integer.  Length of the Option Data field of this option, in octets.\n\n[RFC2460]"
 #define IPV6_OPTION_DATA "Option Data\n\nVariable-length field.  Option-Type-specific data.\n\n[RFC2460]"
+
+/* ARP */
+#define ARP_HTYPE "Hardware Type\n\nThis field specifies the hardware type.\n\n[RFC826]"
+#define ARP_PTYPE "Protocol Type\n\nThis field specifies the protocol type.\n\n[RFC826]"
+#define ARP_HLEN "Hardware Length\n\nThis field specifies the length of each hardware address in bytes.\n\n[RFC826]"
+#define ARP_PLEN "Protocol Length\n\nThis field specifies the length of each protocol address in bytes.\n\n[RFC826]"
+#define ARP_OPERATION "Operation\n\nThis field specifies the operation code. The following codes are possible:\n\t1 = ARP Request\n\t2 = ARP Reply\n\n[RFC826]"
+#define ARP_HW_SENDER "Sender Hardware Address\n\nHardware address of sender of this packet. Length is specified in Hardware Length Field\n\n[RFC826]"
+#define ARP_PROTO_SENDER "Sender Protocol Address\n\nProtocol address of sender of this packet. Length is specified in Protocol Length Field\n\n[RFC826]"
+#define ARP_HW_TARGET "Target Hardware Address\n\nHardware address of target of this packet. Length is specified in Hardware Length Field\n\n[RFC826]"
+#define ARP_PROTO_TARGET "Target Protocol Address\n\nProtocol address of target of this packet. Length is specified in Protocol Length Field\n\n[RFC826]"
+
+/* ICMP */
+#define ICMP_TYPE "Type\n\nThe first octet of the data portion of the datagram is a ICMP type field; the value of this field determines the format of the remaining data.\n\nThe following types are possible:\n\t0 = Echo Reply\n\t3 = Destination Unreachable\n\t4 = Source Quench\n\t5 = Redirect\n\t8 = Echo\n\t11 = Time Exceeded\n\t12 = Parameter Problem\n\t13 = Timestamp\n\t14 = Timestamp Reply\n\t15 = Information Request\n\t16 = Information Reply\n\n[RFC792]"
+#define ICMP_CODE "Code\n\nThe sub code of the ICMP message. It depends on the ICMP type.\n\n[RFC792]"
+#define ICMP_CHECKSUM "Checksum\n\nThe checksum is the 16-bit ones's complement of the one's complement sum of the ICMP message starting with the ICMP Type. For computing the checksum, the checksum field should be zero.\n\n[RFC792]"
+#define ICMP_UNUSED "Unused\n\nAny field labeled 'unused' is reserved for later extensions and must be zero when sent, but receivers should not use these fields (except to include them in the checksum).\n\n[RFC792]"
+#define ICMP_DATA "Data\n\nFurther ICMP data. These fields depend on the ICMP type and sub code.\n\n[RFC792]"
+
+/* ICMPV6 */
+#define ICMPV6_TYPE "Type\n\nThe type field indicates the type of the message. Its value determines the format of the remaining data.\n\n[RFC4443]"
+#define ICMPV6_CODE "Code\n\nThe code field depends on the message type.  It is used to create an additional level of message granularity.\n\n[RFC4443]"
+#define ICMPV6_CHECKSUM "Checksum\n\nThe checksum field is used to detect data corruption in the ICMPv6 message and parts of the IPv6 header.\n\n[RFC4443]"
+#define ICMPV6_DATA "Data\n\nFurther ICMPv6 data. These fields depend on the ICMPv6 type and sub code.\n\n[RFC4443]"
+

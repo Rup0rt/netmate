@@ -319,42 +319,42 @@ GtkGrid *arp_grid(struct arphdr *arp, u_char *options) {
 
   /* hardware type */
   sprintf(label, "Hardware Type: %u", htons(arp->ar_hrd));
-  append_field(grid, &x, &y, sizeof(arp->ar_hrd)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(arp->ar_hrd)*8, label, ARP_HTYPE);
 
   /* protocol type */
   sprintf(label, "Protocol Type: 0x%04x", htons(arp->ar_pro));
-  append_field(grid, &x, &y, sizeof(arp->ar_pro)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(arp->ar_pro)*8, label, ARP_PTYPE);
 
   /* hardware length */
   sprintf(label, "Hardware Length: %u", arp->ar_hln);
-  append_field(grid, &x, &y, sizeof(arp->ar_hln)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(arp->ar_hln)*8, label, ARP_HLEN);
 
   /* protocol length */
   sprintf(label, "Protocol Length: %u", arp->ar_pln);
-  append_field(grid, &x, &y, sizeof(arp->ar_pln)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(arp->ar_pln)*8, label, ARP_PLEN);
 
   /* operation */
   sprintf(label, "Operation: %u", htons(arp->ar_op));
-  append_field(grid, &x, &y, sizeof(arp->ar_op)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(arp->ar_op)*8, label, ARP_OPERATION);
 
   /* sender hardware address (SHA) */
   sprintf(label, "Sender Hardware Address: %02x:%02x:%02x:%02x:%02x:%02x", options[0], options[1], options[2], options[3], options[4], options[5]);
-  append_field(grid, &x, &y, 48, label, NULL);
+  append_field(grid, &x, &y, 48, label, ARP_HW_SENDER);
   options += 6;
 
   /* sender protocol address (SPA) */
   sprintf(label, "Sender Protocol Address: %u.%u.%u.%u", options[0], options[1], options[2], options[3]);
-  append_field(grid, &x, &y, 32, label, NULL);
+  append_field(grid, &x, &y, 32, label, ARP_PROTO_SENDER);
   options += 4;
 
   /* sender hardware address (THA) */
   sprintf(label, "Target Hardware Address: %02x:%02x:%02x:%02x:%02x:%02x", options[0], options[1], options[2], options[3], options[4], options[5]);
-  append_field(grid, &x, &y, 48, label, NULL);
+  append_field(grid, &x, &y, 48, label, ARP_HW_TARGET);
   options += 6;
 
   /* sender protocol address (TPA) */
   sprintf(label, "Target Protocol Address: %u.%u.%u.%u", options[0], options[1], options[2], options[3]);
-  append_field(grid, &x, &y, 32, label, NULL);
+  append_field(grid, &x, &y, 32, label, ARP_PROTO_TARGET);
   options += 4;
 
   /* free memory of label */
@@ -396,19 +396,19 @@ GtkGrid *icmp_grid(struct icmphdr *icmp, u_char *options, int left) {
 
   /* type */
   sprintf(label, "Type: %u", icmp->type);
-  append_field(grid, &x, &y, sizeof(icmp->type)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(icmp->type)*8, label, ICMP_TYPE);
 
   /* code */
   sprintf(label, "Code: %u", icmp->code);
-  append_field(grid, &x, &y, sizeof(icmp->code)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(icmp->code)*8, label, ICMP_CODE);
 
   /* checksum */
   sprintf(label, "Checksum: 0x%04x", htons(icmp->checksum));
-  append_field(grid, &x, &y, sizeof(icmp->checksum)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(icmp->checksum)*8, label, ICMP_CHECKSUM);
 
   /* unused */
   sprintf(label, "Unused: 0x%08x", htonl(icmp->un.gateway));
-  append_field(grid, &x, &y, sizeof(icmp->un)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(icmp->un)*8, label, ICMP_UNUSED);
 
   left -= 8;
 
@@ -425,7 +425,7 @@ GtkGrid *icmp_grid(struct icmphdr *icmp, u_char *options, int left) {
 
     /* option data field */
     sprintf(label, "Data 0x%s", optdata);
-    append_field(grid, &x, &y, optlen*8, label, NULL);
+    append_field(grid, &x, &y, optlen*8, label, ICMP_DATA);
 
     options += optlen;
     left -= optlen;
@@ -470,19 +470,19 @@ GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options) {
 
   /* type */
   sprintf(label, "Type: %u", icmpv6->icmp6_type);
-  append_field(grid, &x, &y, sizeof(icmpv6->icmp6_type)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(icmpv6->icmp6_type)*8, label, ICMPV6_TYPE);
 
   /* code */
   sprintf(label, "Code: %u", icmpv6->icmp6_code);
-  append_field(grid, &x, &y, sizeof(icmpv6->icmp6_code)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(icmpv6->icmp6_code)*8, label, ICMPV6_CODE);
 
   /* checksum */
   sprintf(label, "Code: 0x%04x", htons(icmpv6->icmp6_cksum));
-  append_field(grid, &x, &y, sizeof(icmpv6->icmp6_cksum)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(icmpv6->icmp6_cksum)*8, label, ICMPV6_CHECKSUM);
 
   /* data */
   sprintf(label, "Data: 0x%08x", htonl(icmpv6->icmp6_dataun.icmp6_un_data32[0]));
-  append_field(grid, &x, &y, 32, label, NULL);
+  append_field(grid, &x, &y, 32, label, ICMPV6_DATA);
 
   /* TODO: support options */
   if (options != NULL) {}
