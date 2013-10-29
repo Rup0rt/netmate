@@ -74,3 +74,29 @@
 #define ICMPV6_CHECKSUM "Checksum\n\nThe checksum field is used to detect data corruption in the ICMPv6 message and parts of the IPv6 header.\n\n[RFC4443]"
 #define ICMPV6_DATA "Data\n\nFurther ICMPv6 data. These fields depend on the ICMPv6 type and sub code.\n\n[RFC4443]"
 
+/* LAYER 4 */
+
+/* TCP */
+#define TCP_SPORT "Source Port\n\nThe source port number.\n\n[RFC793]"
+#define TCP_DPORT "Destination Port\n\nThe destination port number.\n\n[RFC793]"
+#define TCP_SEQ_NUM "Sequence Number\n\nThe sequence number of the first data octet in this segment (except when SYN is present). If SYN is present the sequence number is the initial sequence number (ISN) and the first data octet is ISN+1.\n\n[RFC793]"
+#define TCP_ACK_NUM "Acknowledgement Number\n\nIf the ACK control bit is set this field contains the value of the next sequence number the sender of the segment is expecting to receive.  Once a connection is established this is always sent.\n\n[RFC793]"
+#define TCP_DOFF "Data Offset\n\nThe number of 32 bit words in the TCP Header. This indicates where the data begins. The TCP header (even one including options) is an integral number of 32 bits long.\n\n[RFC793]"
+#define TCP_FLAG_RES "Reserved\n\nReserved for future use. Must be zero.\n\n[RFC793]"
+#define TCP_FLAG_NS "Nonce Sum (NS)\n\nThe ECN-nonce adds to this protocol, and enables the receiver to demonstrate to the sender that segments being acknowledged were received unmarked.  A random one-bit value (a nonce) is encoded in the two ECT codepoints.  The one-bit sum of these nonces is returned in a TCP header flag, the nonce sum (NS) bit.  Packet marking erases the nonce value in the ECT codepoints because CE overwrites both ECN IP header bits.  Since each nonce is required to calculate the sum, the correct nonce sum implies receipt of only unmarked packets.  Not only are receivers prevented from concealing marked packets, middle-boxes along the network path cannot unmark a packet without successfully guessing the value of the original nonce.\n\n[RFC3540]"
+#define TCP_FLAG_CWR "Congestion Window Reduce (CWR)\n\nFor TCP, ECN requires three new pieces of functionality:\n\t* negotiation between the endpoints during connection setup to determine if they are both ECN-capable;\n\t* an ECN-Echo (ECE) flag in the TCP header so that the data receiver can inform the data sender when a CE packet has been received;\n\t* and a Congestion Window Reduced (CWR) flag in the TCP header so that the data sender can inform the data receiver that the congestion window has been reduced.\n\n[RFC3168]"
+#define TCP_FLAG_ECE "ECN-Echo (ECE)\n\nFor TCP, ECN requires three new pieces of functionality:\n\t* negotiation between the endpoints during connection setup to determine if they are both ECN-capable;\n\t* an ECN-Echo (ECE) flag in the TCP header so that the data receiver can inform the data sender when a CE packet has been received;\n\t* and a Congestion Window Reduced (CWR) flag in the TCP header so that the data sender can inform the data receiver that the congestion window has been reduced.\n\n[RFC3168]"
+#define TCP_FLAG_URG "Urgent (URG)\n\nIndicates that the Urgent pointer field is significant[RFC793]"
+#define TCP_FLAG_ACK "Acknowledgement (ACK)\n\nIndicates that the Acknowledgment field is significant. All packets after the initial SYN packet sent by the client should have this flag set.\n\n[RFC793]"
+#define TCP_FLAG_PSH "Push (PSH)\n\nPush function. Asks to push the buffered data to the receiving application.\n\n[RFC793]"
+#define TCP_FLAG_RST "Reset (RST)\n\nReset the connection.\n\n[RFC793]"
+#define TCP_FLAG_SYN "Syncronize (SYN)\n\nSynchronize sequence numbers. Only the first packet sent from each end should have this flag set. Some other flags change meaning based on this flag, and some are only valid for when it is set, and others when it is clear.\n\n[RFC793]"
+#define TCP_FLAG_FIN "Finish (FIN)\n\nNo more data from sender.\n\n[RFC793]"
+#define TCP_WINDOW_SIZE "Window Size\n\nThe number of data octets beginning with the one indicated in the acknowledgment field which the sender of this segment is willing to accept.\n\n[RFC793]"
+#define TCP_CHECKSUM "Checksum\n\nThe checksum field is the 16 bit one's complement of the one's complement sum of all 16 bit words in the header and text.  If a segment contains an odd number of header and text octets to be checksummed, the last octet is padded on the right with zeros to form a 16 bit word for checksum purposes.  The pad is not transmitted as part of the segment.  While computing the checksum, the checksum field itself is replaced with zeros.\n\n[RFC793]"
+#define TCP_URGENT_POINTER "Urgent Pointer\n\nThis field communicates the current value of the urgent pointer as a positive offset from the sequence number in this segment.  The urgent pointer points to the sequence number of the octet following the urgent data.  This field is only be interpreted in segments with the URG control bit set.\n\n[RFC793]"
+#define TCP_OPTION_NOP "No Operation (NOP)\n\nThis option code may be used between options, for example, to align the beginning of a subsequent option on a word boundary. There is no guarantee that senders will use this option, so receivers must be prepared to process options even if they do not begin on a word boundary.\n\n[RFC793]"
+#define TCP_OPTION_KIND "Option Kind\n\nThe kind of option.\n\n[RFC793]"
+#define TCP_OPTION_LENGTH "Option Length\n\nThe option-length counts the two octets of option-kind and option-length as well as the option-data octets.\n\n[RFC793]"
+#define TCP_OPTION_DATA "Option Data\n\nThe data of the option. It depends of the option kind.\n\n[RFC793]"
+

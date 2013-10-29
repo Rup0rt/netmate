@@ -38,115 +38,115 @@ GtkGrid *tcp_grid(struct tcphdr *tcp, u_char *options) {
 
   /* source port */
   sprintf(label, "Source Port: %u", htons(tcp->source));
-  append_field(grid, &x, &y, sizeof(tcp->source)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(tcp->source)*8, label, TCP_SPORT);
 
   /* destination port */
   sprintf(label, "Destination Port: %u", htons(tcp->dest));
-  append_field(grid, &x, &y, sizeof(tcp->dest)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(tcp->dest)*8, label, TCP_DPORT);
 
   /* sequence number */
   sprintf(label, "Sequence Number: %u", htonl(tcp->seq));
-  append_field(grid, &x, &y, sizeof(tcp->seq)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(tcp->seq)*8, label, TCP_SEQ_NUM);
 
   /* acknowledgement number */
   sprintf(label, "Acknowledgement Number: %u", htonl(tcp->ack_seq));
-  append_field(grid, &x, &y, sizeof(tcp->ack_seq)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(tcp->ack_seq)*8, label, TCP_ACK_NUM);
 
   /* data offset */
   sprintf(label, "Data Offset: %u (%u bytes)", tcp->doff, tcp->doff*4);
-  append_field(grid, &x, &y, 4, label, NULL);
+  append_field(grid, &x, &y, 4, label, TCP_DOFF);
 
   /* reserved (000) */
   if (tcp->res1 & 0x08) {
-    append_field(grid, &x, &y, 1, "R", NULL);
+    append_field(grid, &x, &y, 1, "R", TCP_FLAG_RES);
   } else {
-    append_field(grid, &x, &y, 1, "r", NULL);
+    append_field(grid, &x, &y, 1, "r", TCP_FLAG_RES);
   }
   if (tcp->res1 & 0x04) {
-    append_field(grid, &x, &y, 1, "R", NULL);
+    append_field(grid, &x, &y, 1, "R", TCP_FLAG_RES);
   } else {
-    append_field(grid, &x, &y, 1, "r", NULL);
+    append_field(grid, &x, &y, 1, "r", TCP_FLAG_RES);
   }
   if (tcp->res1 & 0x02) {
-    append_field(grid, &x, &y, 1, "R", NULL);
+    append_field(grid, &x, &y, 1, "R", TCP_FLAG_RES);
   } else {
-    append_field(grid, &x, &y, 1, "r", NULL);
+    append_field(grid, &x, &y, 1, "r", TCP_FLAG_RES);
   }
 
   /* NS */
   if (tcp->res1 & 0x01) {
-    append_field(grid, &x, &y, 1, "NS", NULL);
+    append_field(grid, &x, &y, 1, "NS", TCP_FLAG_NS);
   } else {
-    append_field(grid, &x, &y, 1, "ns", NULL);
+    append_field(grid, &x, &y, 1, "ns", TCP_FLAG_NS);
   }
 
   /* CWR */
   if (tcp->res2 & 0x02) {
-    append_field(grid, &x, &y, 1, "CWR", NULL);
+    append_field(grid, &x, &y, 1, "CWR", TCP_FLAG_CWR);
   } else {
-    append_field(grid, &x, &y, 1, "cwr", NULL);
+    append_field(grid, &x, &y, 1, "cwr", TCP_FLAG_CWR);
   }
 
   /* ECE */
   if (tcp->res2 & 0x01) {
-    append_field(grid, &x, &y, 1, "ECE", NULL);
+    append_field(grid, &x, &y, 1, "ECE", TCP_FLAG_ECE);
   } else {
-    append_field(grid, &x, &y, 1, "ece", NULL);
+    append_field(grid, &x, &y, 1, "ece", TCP_FLAG_ECE);
   }
 
   /* URG */
   if (tcp->urg) {
-    append_field(grid, &x, &y, 1, "URG", NULL);
+    append_field(grid, &x, &y, 1, "URG", TCP_FLAG_URG);
   } else {
-    append_field(grid, &x, &y, 1, "urg", NULL);
+    append_field(grid, &x, &y, 1, "urg", TCP_FLAG_URG);
   }
 
   /* ACK */
   if (tcp->ack) {
-    append_field(grid, &x, &y, 1, "ACK", NULL);
+    append_field(grid, &x, &y, 1, "ACK", TCP_FLAG_ACK);
   } else {
-    append_field(grid, &x, &y, 1, "ack", NULL);
+    append_field(grid, &x, &y, 1, "ack", TCP_FLAG_ACK);
   }
 
   /* PSH */
   if (tcp->psh) {
-    append_field(grid, &x, &y, 1, "PSH", NULL);
+    append_field(grid, &x, &y, 1, "PSH", TCP_FLAG_PSH);
   } else {
-    append_field(grid, &x, &y, 1, "psh", NULL);
+    append_field(grid, &x, &y, 1, "psh", TCP_FLAG_PSH);
   }
 
   /* RST */
   if (tcp->rst) {
-    append_field(grid, &x, &y, 1, "RST", NULL);
+    append_field(grid, &x, &y, 1, "RST", TCP_FLAG_RST);
   } else {
-    append_field(grid, &x, &y, 1, "rst", NULL);
+    append_field(grid, &x, &y, 1, "rst", TCP_FLAG_RST);
   }
 
   /* SYN */
   if (tcp->syn) {
-    append_field(grid, &x, &y, 1, "SYN", NULL);
+    append_field(grid, &x, &y, 1, "SYN", TCP_FLAG_SYN);
   } else {
-    append_field(grid, &x, &y, 1, "syn", NULL);
+    append_field(grid, &x, &y, 1, "syn", TCP_FLAG_SYN);
   }
 
   /* FIN */
   if (tcp->fin) {
-    append_field(grid, &x, &y, 1, "FIN", NULL);
+    append_field(grid, &x, &y, 1, "FIN", TCP_FLAG_FIN);
   } else {
-    append_field(grid, &x, &y, 1, "fin", NULL);
+    append_field(grid, &x, &y, 1, "fin", TCP_FLAG_FIN);
   }
 
   /* window size */
   sprintf(label, "Window Size: %u", htons(tcp->window));
-  append_field(grid, &x, &y, sizeof(tcp->window)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(tcp->window)*8, label, TCP_WINDOW_SIZE);
 
   /* checksum */
   sprintf(label, "Checksum: 0x%04x", htons(tcp->check));
-  append_field(grid, &x, &y, sizeof(tcp->check)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(tcp->check)*8, label, TCP_CHECKSUM);
 
   /* urgent pointer */
   sprintf(label, "Urgent Pointer: %u", htons(tcp->urg_ptr));
-  append_field(grid, &x, &y, sizeof(tcp->urg_ptr)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(tcp->urg_ptr)*8, label, TCP_URGENT_POINTER);
 
   /* count bytes of option fields */
   left = (tcp->doff-0x05)*4;
@@ -162,7 +162,7 @@ GtkGrid *tcp_grid(struct tcphdr *tcp, u_char *options) {
     if (opttype == 0x01) {
       /* no operation option (pad option - NO kind field) */
       sprintf(label, "Option Kind: 1 (NOP)");
-      append_field(grid, &x, &y, 8, label, NULL);
+      append_field(grid, &x, &y, 8, label, TCP_OPTION_NOP);
 
       optlen = 1;
     } else {
@@ -170,12 +170,12 @@ GtkGrid *tcp_grid(struct tcphdr *tcp, u_char *options) {
 
       /* option kind */
       sprintf(label, "Option Kind: %u", opttype);
-      append_field(grid, &x, &y, 8, label, NULL);
+      append_field(grid, &x, &y, 8, label, TCP_OPTION_KIND);
 
       /* option length (INCLUDING type and kind field) */
       optlen = options[1];
       sprintf(label, "Option Length: %u", optlen);
-      append_field(grid, &x, &y, 8, label, NULL);
+      append_field(grid, &x, &y, 8, label, TCP_OPTION_LENGTH);
 
       /* option has additional option data? */
       if (optlen > 2) {
@@ -189,7 +189,7 @@ GtkGrid *tcp_grid(struct tcphdr *tcp, u_char *options) {
 
         /* option data field */
         sprintf(label, "Option Data: 0x%s", optdata);
-        append_field(grid, &x, &y, (optlen-2)*8, label, NULL);
+        append_field(grid, &x, &y, (optlen-2)*8, label, TCP_OPTION_DATA);
 
         /* free data */
         free(optdata);
