@@ -239,19 +239,19 @@ GtkGrid *udp_grid(struct udphdr *udp) {
 
   /* source port */
   sprintf(label, "Source Port: %u", htons(udp->source));
-  append_field(grid, &x, &y, sizeof(udp->source)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(udp->source)*8, label, UDP_SPORT);
 
   /* destination port */
   sprintf(label, "Destination Port: %u", htons(udp->dest));
-  append_field(grid, &x, &y, sizeof(udp->dest)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(udp->dest)*8, label, UDP_DPORT);
 
   /* length */
   sprintf(label, "Length: %u", htons(udp->len));
-  append_field(grid, &x, &y, sizeof(udp->len)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(udp->len)*8, label, UDP_LENGTH);
 
   /* checksum */
   sprintf(label, "Checksum: 0x%02x", htons(udp->check));
-  append_field(grid, &x, &y, sizeof(udp->check)*8, label, NULL);
+  append_field(grid, &x, &y, sizeof(udp->check)*8, label, UDP_CHECKSUM);
 
   /* free memory of label */
   free(label);
