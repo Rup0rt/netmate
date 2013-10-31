@@ -2,10 +2,103 @@
 /* netmate layer2 protocols */
 /**************************************************************************************************/
 
+char *ethertype(unsigned short id);
 GtkGrid *ethernet_grid(struct ether_header *eth);	/* ethernet */
 GtkGrid *sll_grid(struct sll_header *sll);			/* ssl (linux cooked) */
 
 /**************************************************************************************************/
+
+char *ethertype(unsigned short id) {
+  switch (id) {
+    case 0x0800:
+      return("Internet Protocol Version 4 (IPv4)");
+    case 0x0806:
+      return("Address Resolution Protocol (ARP)");
+    case 0x0842:
+      return("Wake-on-LAN");
+    case 0x22F3:
+      return("IETF TRILL Protocol");
+    case 0x6003:
+      return("DECnet Phase IV");
+    case 0x8035:
+      return("Reverse Address Resolution Protocol");
+    case 0x809B:
+      return("AppleTalk (Ethertalk)");
+    case 0x80F3:
+      return("AppleTalk Address Resolution Protocol (AARP)");
+    case 0x8100:
+      return("VLAN-tagged frame (IEEE 802.1Q)");
+    case 0x8137:
+      return("Internetwork Packet Exchange (IPX)");
+    case 0x8138:
+      return("Internetwork Packet Exchange (IPX)");
+    case 0x8204:
+      return("QNX Qnet");
+    case 0x86DD:
+      return("Internet Protocol Version 6 (IPv6)");
+    case 0x8808:
+      return("Ethernet flow control");
+    case 0x8809:
+      return("Slow Protocols (IEEE 802.3)");
+    case 0x8819:
+      return("CobraNet");
+    case 0x8847:
+      return("MPLS unicast");
+    case 0x8848:
+      return("MPLS multicast");
+    case 0x8863:
+      return("PPPoE Discovery Stage");
+    case 0x8864:
+      return("PPPoE Session Stage");
+    case 0x8870:
+      return("Jumbo Frames");
+    case 0x887B:
+      return("HomePlug 1.0 MME");
+    case 0x888E:
+      return("EAP over LAN (IEEE 802.1X)");
+    case 0x8892:
+      return("PROFINET Protocol");
+    case 0x889A:
+      return("HyperSCSI (SCSI over Ethernet)");
+    case 0x88A2:
+      return("ATA over Ethernet");
+    case 0x88A4:
+      return("EtherCAT Protocol");
+    case 0x88A8:
+      return("Provider Bridging (IEEE 802.1ad)");
+    case 0x88AB:
+      return("Ethernet Powerlink");
+    case 0x88CC:
+      return("Link Layer Discovery Protocol (LLDP)");
+    case 0x88CD:
+      return("SERCOS III");
+    case 0x88E1:
+      return("HomePlug AV MME");
+    case 0x88E3:
+      return("Media Redundancy Protocol (IEC62439-2)");
+    case 0x88E5:
+      return("MAC security (IEEE 802.1AE)");
+    case 0x88F7:
+      return("Precision Time Protocol (IEEE 1588)");
+    case 0x8902:
+      return("IEEE 802.1ag Connectivity Fault Management (CFM) Protocol");
+    case 0x8906:
+      return("Fibre Channel over Ethernet (FCoE)");
+    case 0x8914:
+      return("FCoE Initialization Protocol");
+    case 0x8915:
+      return("RDMA over Converged Ethernet (RoCE)");
+    case 0x892F:
+      return("High-availability Seamless Redundancy (HSR)");
+    case 0x9000:
+      return("Ethernet Configuration Testing Protocol");
+    case 0x9100:
+      return("Q-in-Q");
+    case 0xCAFE:
+      return("Veritas Low Latency Transport (LLT)");
+  }
+  return("UNKNOWN");
+}
 
 GtkGrid *sll_grid(struct sll_header *sll) {
   GtkGrid *grid;	/* the grid itself */
@@ -48,7 +141,7 @@ GtkGrid *sll_grid(struct sll_header *sll) {
   append_field(grid, &x, &y, sizeof(sll->sll_addr)*8, label, SLL_LLA);
 
   /* Upper Layer Protocol */
-  sprintf(label, "Protocol Type: 0x%04x", htons(sll->sll_protocol));
+  sprintf(label, "Protocol Type: 0x%04x (%s)", htons(sll->sll_protocol), ethertype(htons(sll->sll_protocol)));
   append_field(grid, &x, &y, sizeof(sll->sll_protocol)*8, label, SLL_PROTOCOL);
 
   /* free memory of label */
@@ -94,7 +187,7 @@ GtkGrid *ethernet_grid(struct ether_header *eth) {
   append_field(grid, &x, &y, sizeof(eth->ether_shost)*8, label, ETHERNET_DESTINATION);
 
   /* upper layer protocol */
-  sprintf(label, "Type: 0x%04x", htons(eth->ether_type));
+  sprintf(label, "Type: 0x%04x (%s)", htons(eth->ether_type), ethertype(htons(eth->ether_type)));
   append_field(grid, &x, &y, sizeof(eth->ether_type)*8, label, ETHERNET_TYPE);
 
   /* free memory of label */
