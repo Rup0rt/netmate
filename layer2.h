@@ -280,7 +280,25 @@ GtkGrid *sll_grid(struct sll_header *sll) {
   y=1;
 
   /* Packet Type */
-  sprintf(label, "Packet Type: %u", htons(sll->sll_pkttype));
+  switch (htons(sll->sll_pkttype)) {
+    case 0:
+      sprintf(label, "Packet Type: %u (%s)", htons(sll->sll_pkttype), "Sent to us (unicast)");
+      break;
+    case 1:
+      sprintf(label, "Packet Type: %u (%s)", htons(sll->sll_pkttype), "Sent to us (broadcast)");
+      break;
+    case 2:
+      sprintf(label, "Packet Type: %u (%s)", htons(sll->sll_pkttype), "Sent to us (multicast)");
+      break;
+    case 3:
+      sprintf(label, "Packet Type: %u (%s)", htons(sll->sll_pkttype), "Sent to someone else (unicast)");
+      break;
+    case 4:
+      sprintf(label, "Packet Type: %u (%s)", htons(sll->sll_pkttype), "Sent by us");
+      break;
+    default:
+      sprintf(label, "Packet Type: %u (%s)", htons(sll->sll_pkttype), "UNKNOWN");
+  }
   append_field(grid, &x, &y, sizeof(sll->sll_pkttype)*8, label, SLL_PACKET_TYPE);
 
   /* ARP Header Type */
