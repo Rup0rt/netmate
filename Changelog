@@ -1,3 +1,8 @@
+2013-11-01 Robert Krause <Ruport@web.de>
+
+ * added name resolution of ethertype in sll and ethernet protocol
+ * added name resolution of hardware type in sll and arp protocol
+
 2013-10-28 Robert Krause <Ruport@web.de>
 
  * added tooltips for all supported protocols

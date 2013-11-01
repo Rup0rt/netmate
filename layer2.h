@@ -2,11 +2,166 @@
 /* netmate layer2 protocols */
 /**************************************************************************************************/
 
+char *hardwaretype(unsigned short id);
 char *ethertype(unsigned short id);
 GtkGrid *ethernet_grid(struct ether_header *eth);	/* ethernet */
 GtkGrid *sll_grid(struct sll_header *sll);			/* ssl (linux cooked) */
 
 /**************************************************************************************************/
+
+char *hardwaretype(unsigned short id) {
+  switch (id) {
+    case 0:
+      return("NULL");
+    case 1:
+      return("ETHERNET");
+    case 3:
+      return("AX25");
+    case 6:
+      return("IEEE802_5");
+    case 7:
+      return("ARCNET_BSD");
+    case 8:
+      return("SLIP");
+    case 9:
+      return("PPP");
+    case 10:
+      return("FDDI");
+    case 50:
+      return("PPP_HDLC");
+    case 51:
+      return("PPP_ETHER");
+    case 100:
+      return("ATM_RFC1483");
+    case 101:
+      return("RAW");
+    case 104:
+      return("C_HDLC");
+    case 105:
+      return("IEEE802_11");
+    case 107:
+      return("FRELAY");
+    case 108:
+      return("LOOP");
+    case 113:
+      return("LINUX_SLL");
+    case 114:
+      return("LTALK");
+    case 117:
+      return("PFLOG");
+    case 119:
+      return("IEEE802_11_PRISM");
+    case 122:
+      return("IP_OVER_FC");
+    case 123:
+      return("SUNATM");
+    case 127:
+      return("IEEE802_11_RADIOTAP");
+    case 129:
+      return("ARCNET_LINUX");
+    case 138:
+      return("APPLE_IP_OVER_IEEE1394");
+    case 139:
+      return("MTP2_WITH_PHDR");
+    case 140:
+      return("MTP2");
+    case 141:
+      return("MTP3");
+    case 142:
+      return("SCCP");
+    case 143:
+      return("DOCSIS");
+    case 144:
+      return("LINUX_IRDA");
+    case 163:
+      return("IEEE802_11_AVS");
+    case 165:
+      return("BACNET_MS_TP");
+    case 166:
+      return("PPP_PPPD");
+    case 169:
+      return("GPRS_LLC");
+    case 177:
+      return("LINUX_LAPD");
+    case 187:
+      return("BLUETOOTH_HCI_H4");
+    case 189:
+      return("USB_LINUX");
+    case 192:
+      return("PPI");
+    case 195:
+      return("IEEE802_15_4");
+    case 196:
+      return("SITA");
+    case 197:
+      return("ERF");
+    case 201:
+      return("BLUETOOTH_HCI_H4_WITH_PHDR");
+    case 202:
+      return("AX25_KISS");
+    case 203:
+      return("LAPD");
+    case 204:
+      return("PPP_WITH_DIR");
+    case 205:
+      return("C_HDLC_WITH_DIR");
+    case 206:
+      return("FRELAY_WITH_DIR");
+    case 209:
+      return("IPMB_LINUX");
+    case 215:
+      return("IEEE802_15_4_NONASK_PHY");
+    case 220:
+      return("USB_LINUX_MMAPPED");
+    case 224:
+      return("FC_2");
+    case 225:
+      return("FC_2_WITH_FRAME_DELIMS");
+    case 226:
+      return("IPNET");
+    case 227:
+      return("CAN_SOCKETCAN");
+    case 228:
+      return("IPV4");
+    case 229:
+      return("IPV6");
+    case 230:
+      return("IEEE802_15_4_NOFCS");
+    case 231:
+      return("DBUS");
+    case 235:
+      return("DVB_CI");
+    case 236:
+      return("MUX27010");
+    case 237:
+      return("STANAG_5066_D_PDU");
+    case 239:
+      return("NFLOG");
+    case 240:
+      return("NETANALYZER");
+    case 241:
+      return("NETANALYZER_TRANSPARENT");
+    case 242:
+      return("IPOIB");
+    case 243:
+      return("MPEG_2_TS");
+    case 244:
+      return("NG40");
+    case 245:
+      return("NFC_LLCP");
+    case 247:
+      return("INFINIBAND");
+    case 248:
+      return("SCTP");
+    case 249:
+      return("USBPCAP");
+    case 250:
+      return("RTAC_SERIAL");
+    case 251:
+      return("BLUETOOTH_LE_LL");
+  }
+  return("UNKNOWN");
+}
 
 char *ethertype(unsigned short id) {
   switch (id) {
@@ -129,7 +284,7 @@ GtkGrid *sll_grid(struct sll_header *sll) {
   append_field(grid, &x, &y, sizeof(sll->sll_pkttype)*8, label, SLL_PACKET_TYPE);
 
   /* ARP Header Type */
-  sprintf(label, "ARPHRD_ Type: %u", htons(sll->sll_hatype));
+  sprintf(label, "ARPHRD_ Type: %u (%s)", htons(sll->sll_hatype), hardwaretype(htons(sll->sll_hatype)));
   append_field(grid, &x, &y, sizeof(sll->sll_hatype)*8, label, SLL_ARPHRD_TYPE);
 
   /* Link-layer Address Length */

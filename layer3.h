@@ -318,11 +318,11 @@ GtkGrid *arp_grid(struct arphdr *arp, u_char *options) {
   y=1;
 
   /* hardware type */
-  sprintf(label, "Hardware Type: %u", htons(arp->ar_hrd));
+  sprintf(label, "Hardware Type: %u (%s)", htons(arp->ar_hrd), hardwaretype(htons(arp->ar_hrd)));
   append_field(grid, &x, &y, sizeof(arp->ar_hrd)*8, label, ARP_HTYPE);
 
   /* protocol type */
-  sprintf(label, "Protocol Type: 0x%04x", htons(arp->ar_pro));
+  sprintf(label, "Protocol Type: 0x%04x (%s)", htons(arp->ar_pro), ethertype(htons(arp->ar_pro)));
   append_field(grid, &x, &y, sizeof(arp->ar_pro)*8, label, ARP_PTYPE);
 
   /* hardware length */
