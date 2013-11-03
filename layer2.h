@@ -168,9 +168,9 @@ char *hardwaretype(unsigned short id) {
 char *ethertype(unsigned short id) {
   switch (id) {
     case 0x0800:
-      return("Internet Protocol Version 4 (IPv4)");
+      return("IPv4");
     case 0x0806:
-      return("Address Resolution Protocol (ARP)");
+      return("ARP");
     case 0x0842:
       return("Wake-on-LAN");
     case 0x22F3:
@@ -178,21 +178,21 @@ char *ethertype(unsigned short id) {
     case 0x6003:
       return("DECnet Phase IV");
     case 0x8035:
-      return("Reverse Address Resolution Protocol");
+      return("RARP");
     case 0x809B:
       return("AppleTalk (Ethertalk)");
     case 0x80F3:
-      return("AppleTalk Address Resolution Protocol (AARP)");
+      return("AARP");
     case 0x8100:
       return("VLAN-tagged frame (IEEE 802.1Q)");
     case 0x8137:
-      return("Internetwork Packet Exchange (IPX)");
+      return("IPX");
     case 0x8138:
-      return("Internetwork Packet Exchange (IPX)");
+      return("IPX");
     case 0x8204:
       return("QNX Qnet");
     case 0x86DD:
-      return("Internet Protocol Version 6 (IPv6)");
+      return("IPv6");
     case 0x8808:
       return("Ethernet flow control");
     case 0x8809:
@@ -216,7 +216,7 @@ char *ethertype(unsigned short id) {
     case 0x8892:
       return("PROFINET Protocol");
     case 0x889A:
-      return("HyperSCSI (SCSI over Ethernet)");
+      return("HyperSCSI");
     case 0x88A2:
       return("ATA over Ethernet");
     case 0x88A4:
@@ -226,7 +226,7 @@ char *ethertype(unsigned short id) {
     case 0x88AB:
       return("Ethernet Powerlink");
     case 0x88CC:
-      return("Link Layer Discovery Protocol (LLDP)");
+      return("LLDP");
     case 0x88CD:
       return("SERCOS III");
     case 0x88E1:

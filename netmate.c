@@ -173,6 +173,33 @@ void append_field(GtkGrid *grid, int *x, int *y, int size, char *label, char *to
   if (*x == 32) { *x = 0; *y = *y + 1; }
 }
 
+GtkGrid *not_supported_grid(char *protocol) {
+  GtkGrid *grid;	/* the grid itself */
+  char *label;		/* label of buttons to set */
+
+  /* init a new empty grid */
+  grid = GTK_GRID(gtk_grid_new());
+
+  /* set columns to be uniform sized (for better bit size representation) */
+  gtk_grid_set_column_homogeneous(grid, TRUE);
+
+  /* allocate memory for button label */
+  label = malloc(255);
+
+  /* Upper Layer Protocol */
+  sprintf(label, "\n%s is not supported yet.\n\nPlease send an email to Ruport@web.de if you want it to be supported in future releases.", protocol);
+  gtk_grid_attach(grid, gtk_label_new(label), 0, 0, 32, 5);
+
+  /* free memory of label */
+  free(label);
+
+  /* show ethernet grid (tab) */
+  gtk_widget_show_all(GTK_WIDGET(grid));
+
+  /* return grid to tab builder */
+  return(grid);
+}
+
 void display_packet(GtkWidget *widget) {
   GtkTreeSelection *selection;		/* tree selection */
   GtkTreeModel     *model;		/* tree model */
@@ -245,8 +272,9 @@ void display_packet(GtkWidget *widget) {
 
       break;
     default:
-      show_error(widget, "Unsupported link-layer. Please request author to add it!");
-      printf("Layer type: %u\n", pcap_datalink(handler));
+      /* display not supported tab */
+      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(not_supported_grid(hardwaretype(pcap_datalink(handler)))), gtk_label_new(hardwaretype(pcap_datalink(handler))));
+
       return;
   }
 
@@ -288,6 +316,13 @@ void display_packet(GtkWidget *widget) {
       }
 
       break;
+    default:
+      /* display not supported tab */
+      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(not_supported_grid(ethertype(nextproto))), gtk_label_new(ethertype(nextproto)));
+
+      nextproto = 0xffff;
+
+      break;
   }
 
   if (nextproto != 0xffff) {
@@ -317,6 +352,14 @@ void display_packet(GtkWidget *widget) {
         udp = (struct udphdr*)nextptr;
 
         gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(udp_grid(udp)), gtk_label_new("UDP"));
+
+        break;
+      default:
+
+        /* display not supported tab */
+        gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(not_supported_grid(ipprotocol(nextproto))), gtk_label_new(ipprotocol(nextproto)));
+
+        nextproto = 0xffff;
 
         break;
     }
@@ -358,7 +401,7 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **flag
   struct udphdr *udp;
   struct ip6_hdr *ipv6;
   struct sll_header *sll;               /* sll header (linux cooked) */
-  unsigned short nextproto = 0;
+  unsigned short nextproto;
   char *nextptr = NULL;
 
   *protocol = malloc(100);
@@ -374,7 +417,8 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **flag
   memset(*dport, 0, 100);
   memset(*flags, 0, 100);
 
-  sprintf(*protocol, "UNKNOWN");
+  sprintf(*protocol, "%s", hardwaretype(pcap_datalink(handler)));
+  nextproto = 0xffff;
 
   switch (pcap_datalink(handler)) {
 
@@ -382,7 +426,6 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **flag
       /* set pointer to ethernet header */
       eth = (struct ether_header*)(packet);
 
-      sprintf(*protocol, "Ethernet");
       sprintf(*source, "%02x:%02x:%02x:%02x:%02x:%02x", eth->ether_shost[0], eth->ether_shost[1], eth->ether_shost[2], eth->ether_shost[3], eth->ether_shost[4], eth->ether_shost[5]);
       sprintf(*destination, "%02x:%02x:%02x:%02x:%02x:%02x", eth->ether_dhost[0], eth->ether_dhost[1], eth->ether_dhost[2], eth->ether_dhost[3], eth->ether_dhost[4], eth->ether_dhost[5]);
 
@@ -394,7 +437,6 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **flag
       /* LINUX COOKED */
       sll = (struct sll_header*)(packet);
 
-      sprintf(*protocol, "SLL");
       /* TODO: need to check sll->halen to get REAL size (6 chosen here) */
       sprintf(*source, "%02x:%02x:%02x:%02x:%02x:%02x", sll->sll_addr[0], sll->sll_addr[1], sll->sll_addr[2], sll->sll_addr[3], sll->sll_addr[4], sll->sll_addr[5]);
       /* destination is unknown in SLL */
@@ -405,72 +447,74 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **flag
       break;
   }
 
-  switch (nextproto) {
-		case ETHERTYPE_ARP:
-      /* ARP */
-/*      arp = (struct arphdr*)nextptr;*/
-      nextproto = 0xffff;
+  if (nextproto != 0xffff) {
 
-      sprintf(*protocol, "ARP");
+    sprintf(*protocol, "%s", ethertype(nextproto));
+    nextproto = 0xffff;
 
-      break;
+    switch (nextproto) {
 
-    case ETHERTYPE_IP:
-      /* IPV4 */
-      ipv4 = (struct iphdr*)nextptr;
-      nextptr += sizeof(struct iphdr);
-      nextproto = ipv4->protocol;
+      case ETHERTYPE_ARP:
+        /* ARP */
+  /*      arp = (struct arphdr*)nextptr;*/
+        nextproto = 0xffff;
 
-      sprintf(*protocol, "%s", "IPv4");
-      sprintf(*source, "%u.%u.%u.%u", ipv4->saddr & 0xff, (ipv4->saddr >> 8) & 0xff, (ipv4->saddr >> 16) & 0xff, (ipv4->saddr >> 24) & 0xff);
-      sprintf(*destination, "%u.%u.%u.%u", ipv4->daddr & 0xff, (ipv4->daddr >> 8) & 0xff, (ipv4->daddr >> 16) & 0xff, (ipv4->daddr >> 24) & 0xff);
+        break;
 
-      /* reserved flag */
-      if (ipv4->frag_off & htons(IP_RF)) strcat(*flags, "RF ");
+      case ETHERTYPE_IP:
+        /* IPV4 */
+        ipv4 = (struct iphdr*)nextptr;
+        nextptr += sizeof(struct iphdr);
+        nextproto = ipv4->protocol;
 
-      /* dont fragment flag */
-      if (ipv4->frag_off & htons(IP_DF)) strcat(*flags, "DF ");
+        sprintf(*source, "%u.%u.%u.%u", ipv4->saddr & 0xff, (ipv4->saddr >> 8) & 0xff, (ipv4->saddr >> 16) & 0xff, (ipv4->saddr >> 24) & 0xff);
+        sprintf(*destination, "%u.%u.%u.%u", ipv4->daddr & 0xff, (ipv4->daddr >> 8) & 0xff, (ipv4->daddr >> 16) & 0xff, (ipv4->daddr >> 24) & 0xff);
 
-      /* more fragments flag */
-      if (ipv4->frag_off & htons(IP_MF)) strcat(*flags, "MF ");
+        /* reserved flag */
+        if (ipv4->frag_off & htons(IP_RF)) strcat(*flags, "RF ");
 
-      break;
-    case ETHERTYPE_IPV6:
-      ipv6 = (struct ip6_hdr*)nextptr;
-      nextptr += sizeof(struct ip6_hdr);
+        /* dont fragment flag */
+        if (ipv4->frag_off & htons(IP_DF)) strcat(*flags, "DF ");
 
-      sprintf(*protocol, "IPv6");
-      sprintf(*source, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x", htons(ipv6->ip6_src.__in6_u.__u6_addr16[0]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[1]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[2]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[3]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[4]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[5]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[6]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[7]));
-      sprintf(*destination, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x", htons(ipv6->ip6_dst.__in6_u.__u6_addr16[0]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[1]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[2]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[3]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[4]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[5]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[6]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[7]));
+        /* more fragments flag */
+        if (ipv4->frag_off & htons(IP_MF)) strcat(*flags, "MF ");
 
-      nextproto = ipv6->ip6_ctlun.ip6_un1.ip6_un1_nxt;
-      while (nextproto == IPPROTO_HOPOPTS) {
-        /* next header */
-        nextproto = ((u_char*)nextptr)[0];
+        break;
+      case ETHERTYPE_IPV6:
+        ipv6 = (struct ip6_hdr*)nextptr;
+        nextptr += sizeof(struct ip6_hdr);
 
-        nextptr += (((u_char*)nextptr)[1]+1) * 8;
-      }
-      break;
+        sprintf(*source, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x", htons(ipv6->ip6_src.__in6_u.__u6_addr16[0]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[1]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[2]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[3]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[4]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[5]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[6]), htons(ipv6->ip6_src.__in6_u.__u6_addr16[7]));
+        sprintf(*destination, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x", htons(ipv6->ip6_dst.__in6_u.__u6_addr16[0]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[1]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[2]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[3]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[4]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[5]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[6]), htons(ipv6->ip6_dst.__in6_u.__u6_addr16[7]));
+
+        nextproto = ipv6->ip6_ctlun.ip6_un1.ip6_un1_nxt;
+        while (nextproto == IPPROTO_HOPOPTS) {
+          /* next header */
+          nextproto = ((u_char*)nextptr)[0];
+
+          nextptr += (((u_char*)nextptr)[1]+1) * 8;
+        }
+        break;
+    }
   }
 
   if (nextproto != 0xffff) {
+
+    sprintf(*protocol, "%s", ipprotocol(nextproto));
+    nextproto = 0xffff;
+
     switch (nextproto) {
       case IPPROTO_ICMP:
 /*      icmp = (struct icmphdr*)nextptr;*/
-
-        sprintf(*protocol, "%s", "ICMP");
 
         break;
       case IPPROTO_ICMPV6:
 /*        icmp = (struct icmphdr*)nextptr;*/
 
-        sprintf(*protocol, "%s", "ICMPv6");
-
         break;
       case IPPROTO_TCP:
         tcp = (struct tcphdr*)nextptr;
 
-        sprintf(*protocol, "%s", "TCP");
         sprintf(*sport, "%u", htons(tcp->source));
         sprintf(*dport, "%u", htons(tcp->dest));
 
@@ -505,7 +549,6 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **flag
       case IPPROTO_UDP:
         udp = (struct udphdr*)nextptr;
 
-        sprintf(*protocol, "UDP");
         sprintf(*sport, "%u", htons(udp->source));
         sprintf(*dport, "%u", htons(udp->dest));
 
