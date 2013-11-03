@@ -21,7 +21,7 @@
 #endif
 
 /* THE VERSION OF NETMATE */
-#define VERSION "0.18"
+#define VERSION "0.1.9"
 
 /* ADDITIONAL LINK TYPES */
 #define LINKTYPE_LINUX_SLL 113

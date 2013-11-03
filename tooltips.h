@@ -90,7 +90,7 @@
 #define TCP_FLAG_ACK "Acknowledgement (ACK)\n\nIndicates that the Acknowledgment field is significant. All packets after the initial SYN packet sent by the client should have this flag set.\n\n[RFC793]"
 #define TCP_FLAG_PSH "Push (PSH)\n\nPush function. Asks to push the buffered data to the receiving application.\n\n[RFC793]"
 #define TCP_FLAG_RST "Reset (RST)\n\nReset the connection.\n\n[RFC793]"
-#define TCP_FLAG_SYN "Syncronize (SYN)\n\nSynchronize sequence numbers. Only the first packet sent from each end should have this flag set. Some other flags change meaning based on this flag, and some are only valid for when it is set, and others when it is clear.\n\n[RFC793]"
+#define TCP_FLAG_SYN "Synchronize (SYN)\n\nSynchronize sequence numbers. Only the first packet sent from each end should have this flag set. Some other flags change meaning based on this flag, and some are only valid for when it is set, and others when it is clear.\n\n[RFC793]"
 #define TCP_FLAG_FIN "Finish (FIN)\n\nNo more data from sender.\n\n[RFC793]"
 #define TCP_WINDOW_SIZE "Window Size\n\nThe number of data octets beginning with the one indicated in the acknowledgment field which the sender of this segment is willing to accept.\n\n[RFC793]"
 #define TCP_CHECKSUM "Checksum\n\nThe checksum field is the 16 bit one's complement of the one's complement sum of all 16 bit words in the header and text. If a segment contains an odd number of header and text octets to be checksummed, the last octet is padded on the right with zeros to form a 16 bit word for checksum purposes. The pad is not transmitted as part of the segment. While computing the checksum, the checksum field itself is replaced with zeros.\n\n[RFC793]"

@@ -9,6 +9,7 @@ GtkGrid *sll_grid(struct sll_header *sll);			/* ssl (linux cooked) */
 
 /**************************************************************************************************/
 
+/* taken from http://www.tcpdump.org/linktypes.html */
 char *hardwaretype(unsigned short id) {
   switch (id) {
     case 0:
@@ -163,6 +164,7 @@ char *hardwaretype(unsigned short id) {
   return("UNKNOWN");
 }
 
+/* taken from http://en.wikipedia.org/wiki/EtherType */
 char *ethertype(unsigned short id) {
   switch (id) {
     case 0x0800:
