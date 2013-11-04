@@ -6,6 +6,7 @@ char *ipprotocol(unsigned char id);
 char *ipv4_optclass(unsigned char id);
 char *ipv4_optnumber(unsigned char id);
 char *ipv4_optdata(unsigned char number, char *optdata);
+char *arp_operation(unsigned char id);
 GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options);				/* ipv4 (type 0x0800) */
 GtkGrid *ipv6_grid(struct ip6_hdr *ipv6, u_char *options);				/* ipv6 (type 0x08dd) */
 GtkGrid *arp_grid(struct arphdr *arp, u_char *options);					/* arp (type 0x0806) */
@@ -395,6 +396,15 @@ char *ipv4_optdata(unsigned char number, char *optdata) {
   return("UNKNOWN");
 }
 
+char *arp_operation(unsigned char id) {
+  switch (id) {
+    case 1:
+      return("request");
+    case 2:
+      return("reply");
+  }
+  return("UNKNOWN");
+}
 
 GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
   GtkGrid *grid;		/* the grid itself	 */
@@ -723,7 +733,7 @@ GtkGrid *arp_grid(struct arphdr *arp, u_char *options) {
   append_field(grid, &x, &y, sizeof(arp->ar_pln)*8, label, ARP_PLEN);
 
   /* operation */
-  sprintf(label, "Operation: %u", htons(arp->ar_op));
+  sprintf(label, "Operation: %u (%s)", htons(arp->ar_op), arp_operation(htons(arp->ar_op)));
   append_field(grid, &x, &y, sizeof(arp->ar_op)*8, label, ARP_OPERATION);
 
   /* sender hardware address (SHA) */

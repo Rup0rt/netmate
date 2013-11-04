@@ -254,7 +254,7 @@ void display_packet(GtkWidget *widget) {
       eth = (struct ether_header*)(packet);
 
       /* display ethernet tab */
-      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(ethernet_grid(eth)), gtk_label_new("Ethernet"));
+      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(ethernet_grid(eth)), gtk_label_new(hardwaretype(pcap_datalink(handler))));
 
       nextproto = htons(eth->ether_type);
       nextptr = (void*)(packet + sizeof(struct ether_header));
@@ -265,7 +265,7 @@ void display_packet(GtkWidget *widget) {
       sll = (struct sll_header*)(packet);
 
       /* display sll tab */
-      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(sll_grid(sll)), gtk_label_new("Linux Cooked"));
+      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(sll_grid(sll)), gtk_label_new(hardwaretype(pcap_datalink(handler))));
 
       nextproto = htons(sll->sll_protocol);
       nextptr = (void*)(packet + sizeof(struct sll_header));
@@ -282,21 +282,22 @@ void display_packet(GtkWidget *widget) {
     case ETHERTYPE_ARP:
       /* ARP */
       arp = (struct arphdr*)nextptr;
-      nextproto = 0xffff;
       nextptr += sizeof(struct arphdr);
 
       /* display arp tab */
-      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(arp_grid(arp, ((u_char*)nextptr))), gtk_label_new("ARP"));
+      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(arp_grid(arp, ((u_char*)nextptr))), gtk_label_new(ethertype(nextproto)));
+      nextproto = 0xffff;
 
       break;
     case ETHERTYPE_IP:
       /* IPV4 */
       ipv4 = (struct iphdr*)nextptr;
-      nextproto = ipv4->protocol;
       nextptr += sizeof(struct iphdr);
 
       /* display ipv4 tab */
-      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(ipv4_grid(ipv4, ((u_char*)nextptr))), gtk_label_new("IPv4"));
+      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(ipv4_grid(ipv4, ((u_char*)nextptr))), gtk_label_new(ethertype(nextproto)));
+
+      nextproto = ipv4->protocol;
 
       break;
     case ETHERTYPE_IPV6:
@@ -305,9 +306,10 @@ void display_packet(GtkWidget *widget) {
       nextptr += sizeof(struct ip6_hdr);
 
       /* display ipv4 tab */
-      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(ipv6_grid(ipv6, ((u_char*)nextptr))), gtk_label_new("IPv6"));
+      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(ipv6_grid(ipv6, ((u_char*)nextptr))), gtk_label_new(ethertype(nextproto)));
 
       nextproto = ipv6->ip6_ctlun.ip6_un1.ip6_un1_nxt;
+
       while (nextproto == IPPROTO_HOPOPTS) {
         /* next header */
         nextproto = ((u_char*)nextptr)[0];
@@ -331,27 +333,27 @@ void display_packet(GtkWidget *widget) {
         icmp = (struct icmphdr*)nextptr;
         nextptr += sizeof(struct icmphdr);
 
-        gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(icmp_grid(icmp, ((u_char*)nextptr), htons(ipv4->tot_len)-(ipv4->ihl*4))), gtk_label_new("ICMP"));
+        gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(icmp_grid(icmp, ((u_char*)nextptr), htons(ipv4->tot_len)-(ipv4->ihl*4))), gtk_label_new(ipprotocol(nextproto)));
 
         break;
       case IPPROTO_ICMPV6:
         icmpv6 = (struct icmp6_hdr*)nextptr;
         nextptr += sizeof(struct icmp6_hdr);
 
-        gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(icmpv6_grid(icmpv6, ((u_char*)nextptr))), gtk_label_new("ICMPv6"));
+        gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(icmpv6_grid(icmpv6, ((u_char*)nextptr))), gtk_label_new(ipprotocol(nextproto)));
 
         break;
       case IPPROTO_TCP:
         tcp = (struct tcphdr*)nextptr;
         nextptr += sizeof(struct tcphdr);
 
-        gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(tcp_grid(tcp, ((u_char*)nextptr))), gtk_label_new("TCP"));
+        gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(tcp_grid(tcp, ((u_char*)nextptr))), gtk_label_new(ipprotocol(nextproto)));
 
         break;
       case IPPROTO_UDP:
         udp = (struct udphdr*)nextptr;
 
-        gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(udp_grid(udp)), gtk_label_new("UDP"));
+        gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(udp_grid(udp)), gtk_label_new(ipprotocol(nextproto)));
 
         break;
       default:
