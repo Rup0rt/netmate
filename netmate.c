@@ -418,7 +418,6 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **flag
   memset(*flags, 0, 100);
 
   sprintf(*protocol, "%s", hardwaretype(pcap_datalink(handler)));
-  nextproto = 0xffff;
 
   switch (pcap_datalink(handler)) {
 
@@ -445,12 +444,14 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **flag
       nextptr = (void*)(packet + sizeof(struct sll_header));
 
       break;
+    default:
+      nextproto = 0xffff;
+      break;
   }
 
   if (nextproto != 0xffff) {
 
     sprintf(*protocol, "%s", ethertype(nextproto));
-    nextproto = 0xffff;
 
     switch (nextproto) {
 
@@ -495,13 +496,15 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **flag
           nextptr += (((u_char*)nextptr)[1]+1) * 8;
         }
         break;
+      default:
+        nextproto = 0xffff;
+        break;
     }
   }
 
   if (nextproto != 0xffff) {
 
     sprintf(*protocol, "%s", ipprotocol(nextproto));
-    nextproto = 0xffff;
 
     switch (nextproto) {
       case IPPROTO_ICMP:
@@ -552,6 +555,9 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **flag
         sprintf(*sport, "%u", htons(udp->source));
         sprintf(*dport, "%u", htons(udp->dest));
 
+        break;
+      default:
+        nextproto = 0xffff;
         break;
     }
   }

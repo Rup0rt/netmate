@@ -3,6 +3,9 @@
 /**************************************************************************************************/
 
 char *ipprotocol(unsigned char id);
+char *ipv4_optclass(unsigned char id);
+char *ipv4_optnumber(unsigned char id);
+char *ipv4_optdata(unsigned char number, char *optdata);
 GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options);				/* ipv4 (type 0x0800) */
 GtkGrid *ipv6_grid(struct ip6_hdr *ipv6, u_char *options);				/* ipv6 (type 0x08dd) */
 GtkGrid *arp_grid(struct arphdr *arp, u_char *options);					/* arp (type 0x0806) */
@@ -310,6 +313,89 @@ char *ipprotocol(unsigned char id) {
   return("UNKNOWN");
 }
 
+char *ipv4_optclass(unsigned char id) {
+  switch (id) {
+    case 0:
+      return("ctrl");
+    case 1:
+      return("res");
+    case 2:
+      return("debug");
+    case 3:
+      return("res");
+  }
+  return("UNKNOWN");
+}
+
+char *ipv4_optnumber(unsigned char id) {
+  switch (id) {
+    case 0:
+      return("EOOL");
+    case 1:
+      return("NOP");
+    case 2:
+      return("SEC");
+    case 3:
+      return("LSR");
+    case 4:
+      return("TS");
+    case 5:
+      return("E-SEC");
+    case 6:
+      return("CIPSO");
+    case 7:
+      return("RR");
+    case 8:
+      return("SID");
+    case 9:
+      return("SSR");
+    case 10:
+      return("ZSU");
+    case 11:
+      return("MTUP");
+    case 12:
+      return("MTUR");
+    case 13:
+      return("FINN");
+    case 14:
+      return("VISA");
+    case 15:
+      return("ENCODE");
+    case 16:
+      return("IMITD");
+    case 17:
+      return("EIP");
+    case 18:
+      return("TR");
+    case 19:
+      return("ADDEXT");
+    case 20:
+      return("RTRALT");
+    case 21:
+      return("SDB");
+    case 23:
+      return("DPS");
+    case 24:
+      return("UMP");
+    case 25:
+      return("QS");
+    case 30:
+      return("EXP");
+  }
+  return("UNKNOWN");
+}
+
+char *ipv4_optdata(unsigned char number, char *optdata) {
+  switch (number) {
+    /* 0 and 1 do not have option data */
+    case 20:
+      if (strcmp(optdata, "0000") == 0) return("Router shall examine packet");
+      return("Reserved");
+  }
+  return("UNKNOWN");
+}
+
+
 GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
   GtkGrid *grid;		/* the grid itself	 */
   char *label;			/* label of buttons to set */
@@ -430,12 +516,15 @@ GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
     }
 
     /* option class (bit 2 & 3) */
-    sprintf(label, "Class: %u", opttype & IPOPT_CLASS_MASK);
+    sprintf(label, "Class: %u (%s)", opttype & IPOPT_CLASS_MASK, ipv4_optclass(opttype & IPOPT_CLASS_MASK));
     append_field(grid, &x, &y, 2, label, IPV4_OPTION_CLASS);
 
     /* option number (bit 4-8) */
-    sprintf(label, "Number: %u", opttype & IPOPT_NUMBER_MASK);
+    sprintf(label, "Number: %u (%s)", opttype & IPOPT_NUMBER_MASK, ipv4_optnumber(opttype & IPOPT_NUMBER_MASK));
     append_field(grid, &x, &y, 5, label, IPV4_OPTION_NUMBER);
+
+    /* end of options AND no operation do not have further fields */
+    if (((opttype & IPOPT_NUMBER_MASK) == 0) || ((opttype & IPOPT_NUMBER_MASK) == 1)) continue;
 
     /* options length (INCLUDING type & length fields) */
     optlen = options[1];
@@ -450,7 +539,7 @@ GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
     optdata[(optlen-2)*2] = 0x00;
 
     /* option data field */
-    sprintf(label, "Opt. Data 0x%s", optdata);
+    sprintf(label, "Opt. Data 0x%s (%s)", optdata, ipv4_optdata(opttype & IPOPT_NUMBER_MASK, optdata));
     append_field(grid, &x, &y, (optlen-2)*8, label, IPV4_OPTION_DATA);
 
     /* free data */
