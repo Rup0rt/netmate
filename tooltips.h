@@ -66,6 +66,10 @@
 #define ICMP_CODE "Code\n\nThe sub code of the ICMP message. It depends on the ICMP type.\n\n[RFC792]"
 #define ICMP_CHECKSUM "Checksum\n\nThe checksum is the 16-bit ones's complement of the one's complement sum of the ICMP message starting with the ICMP Type. For computing the checksum, the checksum field should be zero.\n\n[RFC792]"
 #define ICMP_UNUSED "Unused\n\nAny field labeled 'unused' is reserved for later extensions and must be zero when sent, but receivers should not use these fields (except to include them in the checksum).\n\n[RFC792]"
+#define ICMP_TIME_POINTER "Pointer\n\nIf code = 0, identifies the octet where an error was detected.\n\n[RFC792]"
+#define ICMP_REDIRECT_GATEWAY "Gateway Internet Address\n\nAddress of the gateway to which traffic for the network specified in the internet destination network field of the original datagram's data should be sent.\n\n[RFC792]"
+#define ICMP_ECHO_ID "Identifier\n\nIf code = 0, an identifier to aid in matching echos and replies, may be zero.\n\n[RFC792]"
+#define ICMP_ECHO_SEQUENCE "Sequence Number\n\nIf code = 0, a sequence number to aid in matching echos and replies, may be zero.\n\n[RFC792]"
 #define ICMP_DATA "Data\n\nFurther ICMP data. These fields depend on the ICMP type and sub code.\n\n[RFC792]"
 
 /* ICMPV6 */

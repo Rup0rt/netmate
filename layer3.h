@@ -7,6 +7,8 @@ char *ipv4_optclass(unsigned char id);
 char *ipv4_optnumber(unsigned char id);
 char *ipv4_optdata(unsigned char number, char *optdata);
 char *arp_operation(unsigned char id);
+char *icmp_type(unsigned char id);
+char *icmp_code(unsigned char type, unsigned char code);
 GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options);				/* ipv4 (type 0x0800) */
 GtkGrid *ipv6_grid(struct ip6_hdr *ipv6, u_char *options);				/* ipv6 (type 0x08dd) */
 GtkGrid *arp_grid(struct arphdr *arp, u_char *options);					/* arp (type 0x0806) */
@@ -406,6 +408,164 @@ char *arp_operation(unsigned char id) {
   return("UNKNOWN");
 }
 
+char *icmp_type(unsigned char id) {
+  switch (id) {
+    case 0:
+      return("Echo Reply");
+    case 3:
+      return("Destination Unreachable");
+    case 4:
+      return("Source Quench");
+    case 5:
+      return("Redirect");
+    case 6:
+      return("Alternate Host Address)");
+    case 8:
+      return("Echo");
+    case 9:
+      return("Router Advertisement");
+    case 10:
+      return("Router Selection");
+    case 11:
+      return("Time Exceeded");
+    case 12:
+      return("Parameter Problem");
+    case 13:
+      return("Timestamp");
+    case 14:
+      return("Timestamp Reply");
+    case 15:
+      return("Information Request");
+    case 16:
+      return("Information Reply");
+    case 17:
+      return("Address Mask Request");
+    case 18:
+      return("Address Mask Reply");
+    case 30:
+      return("Traceroute");
+    case 31:
+      return("Datagram Conversion Error");
+    case 32:
+      return("Mobile Host Redirect");
+    case 33:
+      return("IPv6 Where-Are-You");
+    case 34:
+      return("IPv6 I-Am-Here");
+    case 35:
+      return("Mobile Registration Request");
+    case 36:
+      return("Mobile Registration Reply");
+    case 37:
+      return("Domain Name Request");
+    case 38:
+      return("Domain Name Reply");
+    case 39:
+      return("SKIP");
+    case 40:
+      return("Photuris");
+  }
+  return("UNKNOWN");
+}
+
+char *icmp_code(unsigned char type, unsigned char code) {
+  switch (type) {
+    case 0:
+    case 4:
+    case 8:
+    case 10:
+    case 13:
+    case 14:
+    case 15:
+    case 16:
+    case 17:
+    case 18:
+      if (code == 0) return("No code");
+      break;
+    case 3:
+      switch (code) {
+        case 0:
+          return("Net Unreachable");
+        case 1:
+          return("Host Unreachable");
+        case 2:
+          return("Protocol Unreachable");
+        case 3:
+          return("Port Unreachable");
+        case 4:
+          return("Fragmentation Needed and Don't Fragment was Set");
+        case 5:
+          return("Source Route Failed");
+        case 6:
+          return("Destination Network Unknown");
+        case 7:
+          return("Destination Host Unknown");
+        case 8:
+          return("Source Host Isolated");
+        case 9:
+          return("Communication with Destination Network is Administratively Prohibited");
+        case 10:
+          return("Communication with Destination Host is Administratively Prohibited");
+        case 11:
+          return("Destination Network Unreachable for Type of Service");
+        case 12:
+          return("Destination Host Unreachable for Type of Service");
+        case 13:
+          return("Communication Administratively Prohibited");
+        case 14:
+          return("Host Precedence Violation");
+        case 15:
+          return("Precedence cutoff in effect");
+      }
+      break;
+    case 5:
+      switch (code) {
+        case 0:
+          return("Redirect Datagram for the Network (or subnet)");
+        case 1:
+          return("Redirect Datagram for the Host");
+        case 2:
+          return("Redirect Datagram for the Type of Service and Network");
+        case 3:
+          return("Redirect Datagram for the Type of Service and Host");
+      }
+      break;
+    case 6:
+      if (code == 0) return("Alternate Address for Host");
+      break;
+    case 9:
+      if (code == 0) return("Normal router advertisement");
+      if (code == 16) return("Does not route common traffic");
+      break;
+    case 11:
+      if (code == 0) return("Time to Live exceeded in Transit");
+      if (code == 1) return("Fragment Reassembly Time Exceeded");
+      break;
+    case 12:
+      if (code == 0) return("Pointer indicates the error");
+      if (code == 1) return("Missing a Required Option");
+      if (code == 2) return("Bad Length");
+      break;
+    case 40:
+      switch (code) {
+        case 0:
+          return("Bad SPI");
+        case 1:
+          return("Authentication Failed");
+        case 2:
+          return("Decompression Failed");
+        case 3:
+          return("Decryption Failed");
+        case 4:
+          return("Need Authentication");
+        case 5:
+          return("Need Authorization");
+      }
+      break;
+  }
+  return("UNKNOWN");
+}
+
 GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
   GtkGrid *grid;		/* the grid itself	 */
   char *label;			/* label of buttons to set */
@@ -794,22 +954,93 @@ GtkGrid *icmp_grid(struct icmphdr *icmp, u_char *options, int left) {
   y=1;
 
   /* type */
-  sprintf(label, "Type: %u", icmp->type);
+  sprintf(label, "Type: %u (%s)", icmp->type, icmp_type(icmp->type));
   append_field(grid, &x, &y, sizeof(icmp->type)*8, label, ICMP_TYPE);
 
   /* code */
-  sprintf(label, "Code: %u", icmp->code);
+  sprintf(label, "Code: %u (%s)", icmp->code, icmp_code(icmp->type, icmp->code));
   append_field(grid, &x, &y, sizeof(icmp->code)*8, label, ICMP_CODE);
 
   /* checksum */
   sprintf(label, "Checksum: 0x%04x", htons(icmp->checksum));
   append_field(grid, &x, &y, sizeof(icmp->checksum)*8, label, ICMP_CHECKSUM);
 
-  /* unused */
-  sprintf(label, "Unused: 0x%08x", htonl(icmp->un.gateway));
-  append_field(grid, &x, &y, sizeof(icmp->un)*8, label, ICMP_UNUSED);
+  left -= 4;
 
-  left -= 8;
+  switch (icmp->type) {
+    case 0: /* Echo */
+    case 8: /* Echo Reply */
+      sprintf(label, "Identifier: 0x%04x", htons(icmp->un.echo.id));
+      append_field(grid, &x, &y, 8, label, ICMP_ECHO_ID);
+
+      sprintf(label, "Sequence Number: 0x%04x", htons(icmp->un.echo.sequence));
+      append_field(grid, &x, &y, 24, label, ICMP_ECHO_SEQUENCE);
+
+      left -= 4;
+      break;
+    case 3: /* Destination Unreachable */
+    case 4: /* Source Quench */
+    case 11: /* Time Exceeded */
+      /* unused */
+      sprintf(label, "Unused: 0x%08x", htonl(icmp->un.gateway));
+      append_field(grid, &x, &y, sizeof(icmp->un)*8, label, ICMP_UNUSED);
+      left -= 4;
+
+      /* Internet Header + 64 bits of Original Data Datagram */
+      break;
+
+    case 5: /* Redirect */
+      sprintf(label, "Gateway Internet Address: %u.%u.%u.%u", icmp->un.gateway & 0xff, (icmp->un.gateway >> 8) & 0xff, (icmp->un.gateway >> 16) & 0xff, (icmp->un.gateway >> 24) & 0xff);
+      append_field(grid, &x, &y, sizeof(icmp->un)*8, label, ICMP_REDIRECT_GATEWAY);
+      left -= 4;
+      break;
+
+    case 12: /* Time exceeded */
+      sprintf(label, "Pointer: 0x%02x", htonl(icmp->un.gateway & 0x000000ff));
+      append_field(grid, &x, &y, 8, label, ICMP_TIME_POINTER);
+
+      sprintf(label, "Unused: 0x%06x", htonl(icmp->un.gateway & 0xffffff00));
+      append_field(grid, &x, &y, 24, label, ICMP_UNUSED);
+
+      left -= 4;
+
+      /* Internet Header + 64 bits of Original Data Datagram */
+      break;
+
+    case 13: /* Timestamp */
+    case 14: /* Timestamp Reply */
+      sprintf(label, "Identifier: 0x%04x", htons(icmp->un.echo.id));
+      append_field(grid, &x, &y, 8, label, ICMP_ECHO_ID);
+
+      sprintf(label, "Sequence Number: 0x%04x", htons(icmp->un.echo.sequence));
+      append_field(grid, &x, &y, 24, label, ICMP_ECHO_SEQUENCE);
+
+      left -= 4;
+
+      /* Originate Timestamp */
+      /* Receive Timestamp */
+      /* Transmit Timestamp */
+      break;
+
+    case 15: /* information request message */
+    case 16: /* information reply message */
+      sprintf(label, "Identifier: 0x%04x", htons(icmp->un.echo.id));
+      append_field(grid, &x, &y, 8, label, ICMP_ECHO_ID);
+
+      sprintf(label, "Sequence Number: 0x%04x", htons(icmp->un.echo.sequence));
+      append_field(grid, &x, &y, 24, label, ICMP_ECHO_SEQUENCE);
+
+      left -= 4;
+
+      /* no more data */
+      break;
+    default:
+      /* unused */
+      sprintf(label, "Unused: 0x%08x", htonl(icmp->un.gateway));
+      append_field(grid, &x, &y, sizeof(icmp->un)*8, label, ICMP_UNUSED);
+      left -= 4;
+      break;
+  }
 
   /* allocate memory for option data */
   optdata = malloc(10);
