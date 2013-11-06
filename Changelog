@@ -1,5 +1,6 @@
-2013-11-05 Robert Krause <Ruport@web.de>
+2013-11-06 Robert Krause <Ruport@web.de>
 
+ * added resolution of tcp options
  * added resolution of arp and icmp
  * added resolution of ip protocol in ipv4 and ipv6
  * added resolution of ethertype in sll and ethernet protocol

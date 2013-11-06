@@ -2,10 +2,35 @@
 /* netmate layer4 protocols */
 /**************************************************************************************************/
 
+char *tcp_optkind(unsigned char id);
 GtkGrid *tcp_grid(struct tcphdr *tcp, u_char *options);
 GtkGrid *udp_grid(struct udphdr *udp);
 
 /**************************************************************************************************/
+
+char *tcp_optkind(unsigned char id) {
+  switch (id) {
+    case 0:
+      return("End of Options");
+    case 1:
+      return("No Operation");
+    case 2:
+      return("Maximum segment size");
+    case 3:
+      return("Window scale");
+    case 4:
+      return("SACK permitted");
+    case 5:
+      return("Selective ACKnowledgement");
+    case 8:
+      return("Timestamp");
+    case 14:
+      return("TCP Alternate Checksum Request");
+    case 15:
+      return("TCP Alternate Checksum Data");
+  }
+  return("UNKNOWN");
+}
 
 GtkGrid *tcp_grid(struct tcphdr *tcp, u_char *options) {
   GtkGrid *grid;	/* the grid itself */
@@ -14,7 +39,7 @@ GtkGrid *tcp_grid(struct tcphdr *tcp, u_char *options) {
   int x,y;			/* position pointer to next empty grid cell */
   int left;			/* bytes left for ipv4 options */
   int optlen;		/* length of options field */
-  int opttype;		/* option type */
+  int optkind;		/* option kind */
   int i;			/* loop counter for raw data representation */
 
   /* init new empty grid */
@@ -154,25 +179,20 @@ GtkGrid *tcp_grid(struct tcphdr *tcp, u_char *options) {
   /* progress bytes until no option bytes left */
   while (left > 0) {
     /* get option type (first byte) */
-    opttype = options[0];
+    optkind = options[0];
 
-    /* TODO: switch-case check for option type, the current solution is "dirty" */
+    /* option kind */
+    sprintf(label, "Option Kind: %u (%s)", optkind, tcp_optkind(optkind));
+    append_field(grid, &x, &y, 8, label, TCP_OPTION_KIND);
 
-    /* option dependent output (some options dont have a kind field) */
-    if (opttype == 0x01) {
-      /* no operation option (pad option - NO kind field) */
-      sprintf(label, "Option Kind: 1 (NOP)");
-      append_field(grid, &x, &y, 8, label, TCP_OPTION_NOP);
-
+    /* option dependent output (some options dont have a length field) */
+    if ((optkind == 0x00) || (optkind == 0x01)) { /* EOO or NOP */
+      /* option length is only 1 byte */
       optlen = 1;
     } else {
-      /* options with kind and length field */
+      /* options with variable length */
 
-      /* option kind */
-      sprintf(label, "Option Kind: %u", opttype);
-      append_field(grid, &x, &y, 8, label, TCP_OPTION_KIND);
-
-      /* option length (INCLUDING type and kind field) */
+      /* option length (INCLUDING kind and length field) */
       optlen = options[1];
       sprintf(label, "Option Length: %u", optlen);
       append_field(grid, &x, &y, 8, label, TCP_OPTION_LENGTH);
