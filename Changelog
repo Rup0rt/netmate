@@ -1,11 +1,7 @@
-2013-11-06 Robert Krause <Ruport@web.de>
+2013-11-07 Robert Krause <Ruport@web.de>
 
- * added resolution of tcp options
- * added resolution of arp and icmp
- * added resolution of ip protocol in ipv4 and ipv6
- * added resolution of ethertype in sll and ethernet protocol
- * added resolution of hardware type in sll and arp protocol
- * added resolution of packet type in sll
+ * added resolution of header fields for most supported protocols
+ * fixed minor bugs
 
 2013-10-28 Robert Krause <Ruport@web.de>
 
