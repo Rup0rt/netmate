@@ -6,6 +6,7 @@ char *ipprotocol(unsigned char id);
 char *ipv4_optclass(unsigned char id);
 char *ipv4_optnumber(unsigned char id);
 char *ipv4_optdata(unsigned char number, char *optdata);
+char *ipv6_hopopt_type(unsigned char id);
 char *arp_operation(unsigned char id);
 char *icmp_type(unsigned char id);
 char *icmp_code(unsigned char type, unsigned char code);
@@ -384,6 +385,53 @@ char *ipv4_optnumber(unsigned char id) {
       return("QS");
     case 30:
       return("EXP");
+  }
+  return("UNKNOWN");
+}
+
+char *ipv6_hopopt_type(unsigned char id) {
+  switch (id) {
+    case 0x00:
+      return("Pad1");
+    case 0x01:
+      return("PadN");
+    case 0xc2:
+      return("Jumbo Payload");
+    case 0x63:
+      return("RPL Option");
+    case 0x04:
+      return("Tunnel Encapsulation Limit");
+    case 0x05:
+      return("Router Alert");
+    case 0x26:
+      return("Quick-Start");
+    case 0x07:
+      return("CALIPSO");
+    case 0x08:
+      return("SMF_DPD");
+    case 0xc9:
+      return("Home Address");
+    case 0x8a:
+      return("Endpoint Identification");
+    case 0x8b:
+      return("ILNP Nonce");
+    case 0x8c:
+      return("Line-Identification Option");
+    case 0x4d:
+      return("Deprecated");
+    case 0x6d:
+      return("MPL Option");
+    case 0xee:
+      return("IP_DFF");
+    case 0x1e:
+    case 0x3e:
+    case 0x5e:
+    case 0x7e:
+    case 0x9e:
+    case 0xbe:
+    case 0xde:
+    case 0xfe:
+      return("RFC3692-style Experiment");
   }
   return("UNKNOWN");
 }
@@ -817,7 +865,7 @@ GtkGrid *ipv6_grid(struct ip6_hdr *ipv6, u_char *options) {
     left = hoplen*8 + 6;
     while (left > 0) {
       opttype = options[0];
-      sprintf(label, "Type: %u", opttype);
+      sprintf(label, "Type: %u (%s)", opttype, ipv6_hopopt_type(opttype));
       append_field(grid, &x, &y, 8, label, IPV6_OPTION_TYPE);
 
       optlen = options[1];
