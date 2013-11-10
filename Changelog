@@ -1,7 +1,7 @@
-2013-11-07 Robert Krause <Ruport@web.de>
+2013-11-10 Robert Krause <Ruport@web.de>
 
- * added resolution of header fields for most supported protocols
- * fixed minor bugs
+ * added resolution of header fields for all supported protocols
+ * minor bug fixes
 
 2013-10-28 Robert Krause <Ruport@web.de>
 
