@@ -10,6 +10,8 @@ char *ipv6_hopopt_type(unsigned char id);
 char *arp_operation(unsigned char id);
 char *icmp_type(unsigned char id);
 char *icmp_code(unsigned char type, unsigned char code);
+char *icmpv6_type(unsigned char id);
+char *icmpv6_code(unsigned char type, unsigned char code);
 GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options);				/* ipv4 (type 0x0800) */
 GtkGrid *ipv6_grid(struct ip6_hdr *ipv6, u_char *options);				/* ipv6 (type 0x08dd) */
 GtkGrid *arp_grid(struct arphdr *arp, u_char *options);					/* arp (type 0x0806) */
@@ -614,6 +616,179 @@ char *icmp_code(unsigned char type, unsigned char code) {
   return("UNKNOWN");
 }
 
+char *icmpv6_type(unsigned char id) {
+  switch (id) {
+    case 0:
+      return("Reserved");
+    case 1:
+      return("Destination Unreachable");
+    case 2:
+      return("Packet Too Big");
+    case 3:
+      return("Time Exceeded");
+    case 4:
+      return("Parameter Problem");
+    case 100:
+    case 101:
+    case 200:
+    case 201:
+      return("Private experimentation");
+    case 127:
+      return("Reserved for expansion of ICMPv6 error messages");
+    case 128:
+      return("Echo Request");
+    case 129:
+      return("Echo Reply");
+    case 130:
+      return("Multicast Listener Query");
+    case 131:
+      return("Multicast Listener Report");
+    case 132:
+      return("Multicast Listener Done");
+    case 133:
+      return("Router Solicitation");
+    case 134:
+      return("Router Advertisement");
+    case 135:
+      return("Neighbor Solicitation");
+    case 136:
+      return("Neighbor Advertisement");
+    case 137:
+      return("Redirect Message");
+    case 138:
+      return("Router Renumbering");
+    case 139:
+      return("ICMP Node Information Query");
+    case 140:
+      return("ICMP Node Information Response");
+    case 141:
+      return("Inverse Neighbor Discovery Solicitation Message");
+    case 142:
+      return("Inverse Neighbor Discovery Advertisement Message");
+    case 143:
+      return("Version 2 Multicast Listener Report");
+    case 144:
+      return("Home Agent Address Discovery Request Message");
+    case 145:
+      return("Home Agent Address Discovery Reply Message");
+    case 146:
+      return("Mobile Prefix Solicitation");
+    case 147:
+      return("Mobile Prefix Advertisement");
+    case 148:
+      return("Certification Path Solicitation Message");
+    case 149:
+      return("Certification Path Advertisement Message");
+    case 150:
+      return("ICMP messages utilized by experimental mobility protocols");
+    case 151:
+      return("Multicast Router Advertisement");
+    case 152:
+      return("Multicast Router Solicitation");
+    case 153:
+      return("Multicast Router Termination");
+    case 154:
+      return("FMIPv6 Messages");
+    case 155:
+      return("RPL Control Message");
+    case 156:
+      return("ILNPv6 Locator Update Message");
+    case 157:
+      return("Duplicate Address Request");
+    case 158:
+      return("Duplicate Address Confirmation");
+    case 255:
+      return("Reserved for expansion of ICMPv6 informational messages");
+  }
+  return("UNKNOWN");
+}
+
+char *icmpv6_code(unsigned char type, unsigned char code) {
+  switch (type) {
+    case 0:
+    case 2:
+    case 128:
+    case 129:
+    case 130:
+    case 131:
+    case 132:
+    case 133:
+    case 134:
+    case 135:
+    case 136:
+    case 137:
+    case 141:
+    case 142:
+    case 143:
+    case 144:
+    case 145:
+    case 146:
+    case 147:
+      if (code == 0) return("No code");
+      break;
+    case 1:
+      switch (code) {
+        case 0:
+          return("no route to destination");
+        case 1:
+          return("communication with destination administratively prohibited");
+        case 2:
+          return("beyond scope of source address");
+        case 3:
+          return("address unreachable");
+        case 4:
+          return("port unreachable");
+        case 5:
+          return("source address failed ingress/egress policy");
+        case 6:
+          return("reject route to destination");
+        case 7:
+          return("error in source routing header");
+      }
+      break;
+    case 3:
+      if (code == 0) return("hop limit exceeded in transit");
+      if (code == 1) return("fragment reassembly time exceeded");
+      break;
+    case 4:
+      if (code == 0) return("erroneous header field encountered");
+      if (code == 1) return("unrecognized Next Header type encountered");
+      if (code == 2) return("unrecognized IPv6 option encountered");
+      break;
+    case 138:
+      if (code == 0) return("Router Renumbering Command");
+      if (code == 1) return("Router Renumbering Result");
+      if (code == 255) return("Sequence Number Reset");
+      break;
+    case 139:
+      if (code == 0) return("The Data field contains an IPv6 address which is the Subject of this Query.");
+      if (code == 1) return("The Data field contains a name which is the Subject of this Query, or is empty, as in the case of a NOOP.");
+      if (code == 2) return("The Data field contains an IPv4 address which is the Subject of this Query.");
+      break;
+    case 140:
+      if (code == 0) return("A successful reply. The Reply Data field may or may not be empty.");
+      if (code == 1) return("The Responder refuses to supply the answer. The Reply Data field will be empty.");
+      if (code == 2) return("The Qtype of the Query is unknown to the Responder. The Reply Data field will be empty.");
+      break;
+    case 154:
+      switch (code) {
+        case 0:
+        case 1:
+          return("Reserved");
+        case 2:
+          return("RtSolPr");
+        case 3:
+          return("PrRtAdv");
+        case 4:
+          return("HI - Deprecated");
+        case 5:
+          return("HAck - Deprecated");
+      }
+      break;
+  }
+  return("UNKNOWN");
+}
+
 GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
   GtkGrid *grid;		/* the grid itself	 */
   char *label;			/* label of buttons to set */
@@ -1147,11 +1322,11 @@ GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options) {
   y=1;
 
   /* type */
-  sprintf(label, "Type: %u", icmpv6->icmp6_type);
+  sprintf(label, "Type: %u (%s)", icmpv6->icmp6_type, icmpv6_type(icmpv6->icmp6_type));
   append_field(grid, &x, &y, sizeof(icmpv6->icmp6_type)*8, label, ICMPV6_TYPE);
 
   /* code */
-  sprintf(label, "Code: %u", icmpv6->icmp6_code);
+  sprintf(label, "Code: %u (%s)", icmpv6->icmp6_code, icmpv6_code(icmpv6->icmp6_type, icmpv6->icmp6_code));
   append_field(grid, &x, &y, sizeof(icmpv6->icmp6_code)*8, label, ICMPV6_CODE);
 
   /* checksum */
