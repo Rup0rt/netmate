@@ -16,7 +16,7 @@ GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options);				/* ipv4 (type 0x0800
 GtkGrid *ipv6_grid(struct ip6_hdr *ipv6, u_char *options);				/* ipv6 (type 0x08dd) */
 GtkGrid *arp_grid(struct arphdr *arp, u_char *options);					/* arp (type 0x0806) */
 GtkGrid *icmp_grid(struct icmphdr *icmp, u_char *options, int left);	/* icmp */
-GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options);		/* icmp */
+GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6);		/* icmp */
 
 /**************************************************************************************************/
 
@@ -1297,7 +1297,7 @@ GtkGrid *icmp_grid(struct icmphdr *icmp, u_char *options, int left) {
   return(grid);
 }
 
-GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options) {
+GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6) {
   GtkGrid *grid;	/* the grid itself */
   char *label;		/* label of buttons to set */
   int x,y;			/* position pointer to next empty grid cell */
@@ -1332,13 +1332,6 @@ GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options) {
   /* checksum */
   sprintf(label, "Code: 0x%04x", htons(icmpv6->icmp6_cksum));
   append_field(grid, &x, &y, sizeof(icmpv6->icmp6_cksum)*8, label, ICMPV6_CHECKSUM);
-
-  /* data */
-  sprintf(label, "Data: 0x%08x", htonl(icmpv6->icmp6_dataun.icmp6_un_data32[0]));
-  append_field(grid, &x, &y, 32, label, ICMPV6_DATA);
-
-  /* TODO: support options */
-  if (options != NULL) {}
 
   /* free memory of label */
   free(label);
