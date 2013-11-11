@@ -1301,6 +1301,7 @@ GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options) {
   GtkGrid *grid;	/* the grid itself */
   char *label;		/* label of buttons to set */
   int x,y;			/* position pointer to next empty grid cell */
+  unsigned int ifield;
 
   /* init new empty grid */
   grid = GTK_GRID(gtk_grid_new());
@@ -1332,6 +1333,20 @@ GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options) {
   /* checksum */
   sprintf(label, "Code: 0x%04x", htons(icmpv6->icmp6_cksum));
   append_field(grid, &x, &y, sizeof(icmpv6->icmp6_cksum)*8, label, ICMPV6_CHECKSUM);
+
+  switch (icmpv6->icmp6_type) {
+    case 135:
+      memcpy(&ifield, options, 4);
+      sprintf(label, "Reserved: 0x%08x", htonl(ifield));
+      append_field(grid, &x, &y, 32, label, NDP_RESERVED);
+      options += 4;
+
+      sprintf(label, "Target Address: %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x", options[0], options[1], options[2], options[3], options[4], options[5], options[6], options[7], options[8], options[9], options[10], options[11], options[12], options[13], options[14], options[15]);
+      append_field(grid, &x, &y, 128, label, NDP_TARGET);
+      options += 16;
+
+      break;
+  }
 
   /* free memory of label */
   free(label);

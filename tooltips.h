@@ -12,6 +12,10 @@
 #define SLL_LLA "Link-layer Address\n\nThe link-layer address field contains the link-layer address of the sender of the packet; the number of bytes of that field that are meaningful is specified by the link-layer address length field. If there are more than 8 bytes, only the first 8 bytes are present, and if there are fewer than 8 bytes, there are padding bytes after the address to pad the field to 8 bytes.\n\n[www.tcpdump.org]"
 #define SLL_PROTOCOL "Protocol Type\n\nThe protocol type field is in network byte order; it contains an Ethernet protocol type, or one of:\n\t1, if the frame is a Novell 802.3 frame without an 802.2 LLC header;\n\t4, if the frame begins with an 802.2 LLC header.\n\n[www.tcpdump.org]"
 
+/* NDP */
+#define NDP_RESERVED "Reserved\n\nThis field is unused. It MUST be initialized to zero by the sender and MUST be ignored by the receiver.\n\n[RFC4861]"
+#define NDP_TARGET "Target Address\n\nThe IP address of the target of the solicitation. It MUST NOT be a multicast address.\n\n[RFC4861]"
+
 /* LAYER 3 */
 
 /* IPv4 */
