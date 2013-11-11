@@ -342,12 +342,7 @@ void display_packet(GtkWidget *widget) {
         /* skip 4 bytes of unused / reserved fields of header struct and pass to next protocol pointer */
         nextptr += sizeof(struct icmp6_hdr)-4;
 
-        gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(icmpv6_grid(icmpv6)), gtk_label_new(ipprotocol(nextproto)));
-
-        /* neighbor discovery protocol? */
-        if ((icmpv6->icmp6_type >= 133) && (icmpv6->icmp6_type <= 137)) {
-          gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(not_supported_grid(ethertype(nextproto))), gtk_label_new("NDP"));
-        }
+        gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(icmpv6_grid(icmpv6, ((u_char*)nextptr))), gtk_label_new(ipprotocol(nextproto)));
 
         break;
       case IPPROTO_TCP:
@@ -405,7 +400,6 @@ void openpcapfile(GtkWidget *widget, gpointer data) {
 
 void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **flags, char **source, char **sport, char **destination, char **dport) {
   struct ether_header *eth;
-  struct icmp6_hdr *icmpv6;
   struct iphdr *ipv4;                   /* ipv4_header pointer */
   struct tcphdr *tcp;
   struct udphdr *udp;
@@ -522,12 +516,7 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **flag
 
         break;
       case IPPROTO_ICMPV6:
-        icmpv6 = (struct icmp6_hdr*)nextptr;
-
-        /* neighbor discovery protocol? */
-        if ((icmpv6->icmp6_type >= 133) && (icmpv6->icmp6_type <= 137)) {
-          sprintf(*protocol, "%s", "NDP");
-        }
+/*        icmpv6 = (struct icmp6_hdr*)nextptr;*/
 
         break;
       case IPPROTO_TCP:
