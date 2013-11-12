@@ -13,9 +13,16 @@
 #define SLL_PROTOCOL "Protocol Type\n\nThe protocol type field is in network byte order; it contains an Ethernet protocol type, or one of:\n\t1, if the frame is a Novell 802.3 frame without an 802.2 LLC header;\n\t4, if the frame begins with an 802.2 LLC header.\n\n[www.tcpdump.org]"
 
 /* NDP */
-#define NDP_RESERVED "Reserved\n\nThis field is unused. It MUST be initialized to zero by the sender and MUST be ignored by the receiver.\n\n[RFC4861]"
-#define NDP_TARGET "Target Address\n\nThe IP address of the target of the solicitation. It MUST NOT be a multicast address.\n\n[RFC4861]"
-#define NDP_LLSOURCE "Source link-layer address\n\nThe link-layer address for the sender.  MUST NOT be included when the source IP address is the unspecified address.  Otherwise, on link layers that have addresses this option MUST be included in multicast solicitations and SHOULD be included in unicast solicitations.\n\n[RFC4861]"
+#define NDP_NS_RESERVED "Reserved\n\nThis field is unused. It MUST be initialized to zero by the sender and MUST be ignored by the receiver.\n\n[RFC4861]"
+#define NDP_NS_TARGET "Target Address\n\nThe IP address of the target of the solicitation. It MUST NOT be a multicast address.\n\n[RFC4861]"
+#define NDP_NA_RESERVED "Reserved\n\n29-bit unused field.  It MUST be initialized to zero by the sender and MUST be ignored by the receiver.\n\n[RFC4861]"
+#define NDP_NA_ROUTER "Router Flag\n\nWhen set, the R-bit indicates that the sender is a router.  The R-bit is used by Neighbor Unreachability Detection to detect a router that changes to a host.\n\n[RFC4861]"
+#define NDP_NA_SOLICITED "Solicited Flag\n\nWhen set, the S-bit indicates that the advertisement was sent in response to a Neighbor Solicitation from the Destination address. The S-bit is used as a reachability confirmation for Neighbor Unreachability Detection.  It MUST NOT be set in multicast advertisements or in unsolicited unicast advertisements.\n\n[RFC4861]"
+#define NDP_NA_OVERRIDE "Override Flag\n\nWhen set, the O-bit indicates that the advertisement should override an existing cache entry and update the cached link-layer address. When it is not set the advertisement will not update a cached link-layer address though it will update an existing Neighbor Cache entry for which no link-layer address is known.  It SHOULD NOT be set in solicited advertisements for anycast addresses and in solicited proxy advertisements. It SHOULD be set in other solicited advertisements and in unsolicited advertisements.\n\n[RFC4861]"
+#define NDP_NA_TARGET "Target Address\n\nFor solicited advertisements, the Target Address field in the Neighbor Solicitation message that prompted this advertisement.  For an unsolicited advertisement, the address whose link-layer address has changed.  The Target Address MUST NOT be a multicast address.\n\n[RFC4861]"
+#define NDP_OPTION_TYPE "Type\n\n8-bit identifier of the type of option.  The options defined in this document are:\n\t1 = Source Link-Layer Address\n\t2 = Target Link-Layer Address\n\t3 = Prefix Information\n\t4 = Redirected Header\n\t5 = MTU\n\n[RFC4861]"
+#define NDP_OPTION_LENGTH "Length\n\n8-bit unsigned integer.  The length of the option (including the type and length fields) in units of 8 octets.  The value 0 is invalid.  Nodes MUST silently discard an ND packet that contains an option with length zero.\n\n[RFC4861]"
+#define NDP_OPTION_DATA "Data\n\nVariable-length field. Option-Type-specific data.\n\n[RFC4861]"
 
 /* LAYER 3 */
 

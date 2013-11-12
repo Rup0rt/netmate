@@ -12,6 +12,7 @@ char *icmp_type(unsigned char id);
 char *icmp_code(unsigned char type, unsigned char code);
 char *icmpv6_type(unsigned char id);
 char *icmpv6_code(unsigned char type, unsigned char code);
+char *icmpv6_opttype(unsigned char id);
 GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options);				/* ipv4 (type 0x0800) */
 GtkGrid *ipv6_grid(struct ip6_hdr *ipv6, u_char *options);				/* ipv6 (type 0x08dd) */
 GtkGrid *arp_grid(struct arphdr *arp, u_char *options);					/* arp (type 0x0806) */
@@ -789,6 +790,23 @@ char *icmpv6_code(unsigned char type, unsigned char code) {
   return("UNKNOWN");
 }
 
+char *icmpv6_opttype(unsigned char id) {
+  switch (id) {
+    case 1:
+      return("Source Link-Layer Address");
+    case 2:
+      return("Target Link-Layer Address");
+    case 3:
+      return("Prefix Information");
+    case 4:
+      return("Redirected Header");
+    case 5:
+      return("MTU");
+  }
+  return("UNKNOWN");
+}
+
+
 GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options) {
   GtkGrid *grid;		/* the grid itself	 */
   char *label;			/* label of buttons to set */
@@ -1301,6 +1319,10 @@ GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options, int left) {
   GtkGrid *grid;	/* the grid itself */
   char *label;		/* label of buttons to set */
   int x,y;			/* position pointer to next empty grid cell */
+  int i;
+  int opttype;
+  int optlen;
+  char *optdata;
   unsigned int ifield;
 
   /* init new empty grid */
@@ -1340,24 +1362,78 @@ GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options, int left) {
     case 135:
       memcpy(&ifield, options, 4);
       sprintf(label, "Reserved: 0x%08x", htonl(ifield));
-      append_field(grid, &x, &y, 32, label, NDP_RESERVED);
+      append_field(grid, &x, &y, 32, label, NDP_NS_RESERVED);
       options += 4;
       left -= 4;
 
       sprintf(label, "Target Address: %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x", options[0], options[1], options[2], options[3], options[4], options[5], options[6], options[7], options[8], options[9], options[10], options[11], options[12], options[13], options[14], options[15]);
-      append_field(grid, &x, &y, 128, label, NDP_TARGET);
+      append_field(grid, &x, &y, 128, label, NDP_NS_TARGET);
       options += 16;
       left -= 16;
 
-      /* any data left, then it must be Source link-layer address */
-      if (left > 0) {
-        sprintf(label, "Source link-layer address: %02x:%02x:%02x:%02x:%02x:%02x", options[0], options[1], options[2], options[3], options[4], options[5]);
-        append_field(grid, &x, &y, 128, label, NDP_LLSOURCE);
-        options += 16;
-        left -= 16;
+      break;
+    case 136:
+      memcpy(&ifield, options, 4);
+      ifield = htonl(ifield);
+
+      /* router flag */
+      if (ifield & 0x80000000) {
+        append_field(grid, &x, &y, 1, "R", NDP_NA_ROUTER);
+      } else {
+        append_field(grid, &x, &y, 1, "r", NDP_NA_ROUTER);
       }
 
+      /* solicited flag */
+      if (ifield & 0x40000000) {
+        append_field(grid, &x, &y, 1, "S", NDP_NA_SOLICITED);
+      } else {
+        append_field(grid, &x, &y, 1, "s", NDP_NA_SOLICITED);
+      }
+
+      /* override flag */
+      if (ifield & 0x20000000) {
+        append_field(grid, &x, &y, 1, "O", NDP_NA_OVERRIDE);
+      } else {
+        append_field(grid, &x, &y, 1, "o", NDP_NA_OVERRIDE);
+      }
+
+      sprintf(label, "Reserved: 0x%08x", ifield & 0x1FFFFFFF);
+      append_field(grid, &x, &y, 29, label, NDP_NA_RESERVED);
+      options += 4;
+      left -= 4;
+
+      sprintf(label, "Target Address: %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x", options[0], options[1], options[2], options[3], options[4], options[5], options[6], options[7], options[8], options[9], options[10], options[11], options[12], options[13], options[14], options[15]);
+      append_field(grid, &x, &y, 8*8, label, NDP_NA_TARGET);
+      options += 16;
+      left -= 16;
+
       break;
+  }
+
+  /* options */
+  while (left > 0) {
+    opttype = options[0];
+    sprintf(label, "Type: %u (%s)", opttype, icmpv6_opttype(opttype));
+    append_field(grid, &x, &y, 8, label, NDP_OPTION_TYPE);
+
+    optlen = options[1] * 8;
+    sprintf(label, "Length: %u (%u bytes)", options[1], optlen);
+    append_field(grid, &x, &y, 8, label, NDP_OPTION_LENGTH);
+
+    if (optlen > 0) {
+      optdata = malloc(optlen);
+
+      for (i=0; i<optlen-2; ++i) sprintf(&optdata[i*2], "%02x", (unsigned int)options[i+2]);
+      optdata[(optlen-2)*2] = 0x00;
+
+      sprintf(label, "Data: 0x%s", optdata);
+      append_field(grid, &x, &y, (optlen-2)*8, label, NDP_OPTION_DATA);
+
+      free(optdata);
+    }
+
+    options += optlen;
+    left -= optlen;
   }
 
   /* free memory of label */
