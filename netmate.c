@@ -21,7 +21,7 @@
 #endif
 
 /* THE VERSION OF NETMATE */
-#define VERSION "0.1.9"
+#define VERSION "0.2.0"
 
 /* ADDITIONAL LINK TYPES */
 #define LINKTYPE_LINUX_SLL 113
@@ -342,7 +342,7 @@ void display_packet(GtkWidget *widget) {
         /* skip 4 bytes of unused / reserved fields of header struct and pass to next protocol pointer */
         nextptr += sizeof(struct icmp6_hdr)-4;
 
-        gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(icmpv6_grid(icmpv6, ((u_char*)nextptr))), gtk_label_new(ipprotocol(nextproto)));
+        gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(icmpv6_grid(icmpv6, ((u_char*)nextptr), htons(ipv6->ip6_ctlun.ip6_un1.ip6_un1_plen))), gtk_label_new(ipprotocol(nextproto)));
 
         break;
       case IPPROTO_TCP:

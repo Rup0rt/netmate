@@ -16,7 +16,7 @@ GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options);				/* ipv4 (type 0x0800
 GtkGrid *ipv6_grid(struct ip6_hdr *ipv6, u_char *options);				/* ipv6 (type 0x08dd) */
 GtkGrid *arp_grid(struct arphdr *arp, u_char *options);					/* arp (type 0x0806) */
 GtkGrid *icmp_grid(struct icmphdr *icmp, u_char *options, int left);	/* icmp */
-GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options);		/* icmp */
+GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options, int left);		/* icmp */
 
 /**************************************************************************************************/
 
@@ -1297,7 +1297,7 @@ GtkGrid *icmp_grid(struct icmphdr *icmp, u_char *options, int left) {
   return(grid);
 }
 
-GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options) {
+GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options, int left) {
   GtkGrid *grid;	/* the grid itself */
   char *label;		/* label of buttons to set */
   int x,y;			/* position pointer to next empty grid cell */
@@ -1331,8 +1331,10 @@ GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options) {
   append_field(grid, &x, &y, sizeof(icmpv6->icmp6_code)*8, label, ICMPV6_CODE);
 
   /* checksum */
-  sprintf(label, "Code: 0x%04x", htons(icmpv6->icmp6_cksum));
+  sprintf(label, "Checksum: 0x%04x", htons(icmpv6->icmp6_cksum));
   append_field(grid, &x, &y, sizeof(icmpv6->icmp6_cksum)*8, label, ICMPV6_CHECKSUM);
+
+  left -= 4;
 
   switch (icmpv6->icmp6_type) {
     case 135:
@@ -1340,10 +1342,20 @@ GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options) {
       sprintf(label, "Reserved: 0x%08x", htonl(ifield));
       append_field(grid, &x, &y, 32, label, NDP_RESERVED);
       options += 4;
+      left -= 4;
 
       sprintf(label, "Target Address: %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x", options[0], options[1], options[2], options[3], options[4], options[5], options[6], options[7], options[8], options[9], options[10], options[11], options[12], options[13], options[14], options[15]);
       append_field(grid, &x, &y, 128, label, NDP_TARGET);
       options += 16;
+      left -= 16;
+
+      /* any data left, then it must be Source link-layer address */
+      if (left > 0) {
+        sprintf(label, "Source link-layer address: %02x:%02x:%02x:%02x:%02x:%02x", options[0], options[1], options[2], options[3], options[4], options[5]);
+        append_field(grid, &x, &y, 128, label, NDP_LLSOURCE);
+        options += 16;
+        left -= 16;
+      }
 
       break;
   }

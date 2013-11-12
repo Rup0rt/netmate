@@ -15,6 +15,7 @@
 /* NDP */
 #define NDP_RESERVED "Reserved\n\nThis field is unused. It MUST be initialized to zero by the sender and MUST be ignored by the receiver.\n\n[RFC4861]"
 #define NDP_TARGET "Target Address\n\nThe IP address of the target of the solicitation. It MUST NOT be a multicast address.\n\n[RFC4861]"
+#define NDP_LLSOURCE "Source link-layer address\n\nThe link-layer address for the sender.  MUST NOT be included when the source IP address is the unspecified address.  Otherwise, on link layers that have addresses this option MUST be included in multicast solicitations and SHOULD be included in unicast solicitations.\n\n[RFC4861]"
 
 /* LAYER 3 */
 
