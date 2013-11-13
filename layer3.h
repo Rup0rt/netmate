@@ -1324,6 +1324,7 @@ GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options, int left) {
   int optlen;
   char *optdata;
   unsigned int ifield;
+  unsigned short sfield;
 
   /* init new empty grid */
   grid = GTK_GRID(gtk_grid_new());
@@ -1359,6 +1360,50 @@ GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options, int left) {
   left -= 4;
 
   switch (icmpv6->icmp6_type) {
+    case 134:
+      sprintf(label, "Cur Hop Limit: %u", options[0]);
+      append_field(grid, &x, &y, 8, label, NDP_RA_CHLIMIT);
+      options++;
+      left--;
+
+      /* Managed address configuration */
+      if (options[0] & 0x80) {
+        append_field(grid, &x, &y, 1, "M", NDP_RA_MACONFIG);
+      } else {
+        append_field(grid, &x, &y, 1, "m", NDP_RA_MACONFIG);
+      }
+
+      /* other address configuration */
+      if (options[0] & 0x40) {
+        append_field(grid, &x, &y, 1, "O", NDP_RA_OCONFIG);
+      } else {
+        append_field(grid, &x, &y, 1, "o", NDP_RA_OCONFIG);
+      }
+
+      sprintf(label, "Reserved: 0x%02x", options[0] & 0x3F);
+      append_field(grid, &x, &y, 6, label, NDP_RA_RESERVED);
+      options++;
+      left--;
+
+      memcpy(&sfield, options, 2);
+      sprintf(label, "Router Lifetime: %u", htons(sfield));
+      append_field(grid, &x, &y, 16, label, NDP_RA_ROUTERLIFETIME);
+      options += 2;
+      left -= 2;
+
+      memcpy(&ifield, options, 4);
+      sprintf(label, "Reachable Time: %u", htonl(ifield));
+      append_field(grid, &x, &y, 32, label, NDP_RA_REACHTIME);
+      options += 4;
+      left -= 4;
+
+      memcpy(&ifield, options, 4);
+      sprintf(label, "Retrans Timer: %u", htonl(ifield));
+      append_field(grid, &x, &y, 32, label, NDP_RA_RETRANSTIMER);
+      options += 4;
+      left -= 4;
+
+      break;
     case 135:
       memcpy(&ifield, options, 4);
       sprintf(label, "Reserved: 0x%08x", htonl(ifield));
@@ -1421,7 +1466,7 @@ GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options, int left) {
     append_field(grid, &x, &y, 8, label, NDP_OPTION_LENGTH);
 
     if (optlen > 0) {
-      optdata = malloc(optlen);
+      optdata = malloc(optlen*2);
 
       for (i=0; i<optlen-2; ++i) sprintf(&optdata[i*2], "%02x", (unsigned int)options[i+2]);
       optdata[(optlen-2)*2] = 0x00;
