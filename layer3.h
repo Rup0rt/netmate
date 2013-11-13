@@ -1360,6 +1360,14 @@ GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options, int left) {
   left -= 4;
 
   switch (icmpv6->icmp6_type) {
+    case 133:
+      memcpy(&ifield, options, 4);
+      sprintf(label, "Reserved: 0x%08x", htonl(ifield));
+      append_field(grid, &x, &y, 32, label, NDP_RS_RESERVED);
+      options += 4;
+      left -= 4;
+
+      break;
     case 134:
       sprintf(label, "Cur Hop Limit: %u", options[0]);
       append_field(grid, &x, &y, 8, label, NDP_RA_CHLIMIT);
@@ -1453,32 +1461,52 @@ GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options, int left) {
       left -= 16;
 
       break;
+    case 137:
+      memcpy(&ifield, options, 4);
+      sprintf(label, "Reserved: 0x%08x", htonl(ifield));
+      append_field(grid, &x, &y, 32, label, NDP_R_RESERVED);
+      options += 4;
+      left -= 4;
+
+      sprintf(label, "Target Address: %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x", options[0], options[1], options[2], options[3], options[4], options[5], options[6], options[7], options[8], options[9], options[10], options[11], options[12], options[13], options[14], options[15]);
+      append_field(grid, &x, &y, 128, label, NDP_R_TARGET);
+      options += 16;
+      left -= 16;
+
+      sprintf(label, "Destination Address: %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x", options[0], options[1], options[2], options[3], options[4], options[5], options[6], options[7], options[8], options[9], options[10], options[11], options[12], options[13], options[14], options[15]);
+      append_field(grid, &x, &y, 128, label, NDP_R_DEST);
+      options += 16;
+      left -= 16;
+
+      break;
   }
 
-  /* options */
-  while (left > 0) {
-    opttype = options[0];
-    sprintf(label, "Type: %u (%s)", opttype, icmpv6_opttype(opttype));
-    append_field(grid, &x, &y, 8, label, NDP_OPTION_TYPE);
+  /* NDP options */
+  if ((icmpv6->icmp6_type >= 133) && (icmpv6->icmp6_type <= 137)) {
+    while (left > 0) {
+      opttype = options[0];
+      sprintf(label, "Type: %u (%s)", opttype, icmpv6_opttype(opttype));
+      append_field(grid, &x, &y, 8, label, NDP_OPTION_TYPE);
 
-    optlen = options[1] * 8;
-    sprintf(label, "Length: %u (%u bytes)", options[1], optlen);
-    append_field(grid, &x, &y, 8, label, NDP_OPTION_LENGTH);
+      optlen = options[1] * 8;
+      sprintf(label, "Length: %u (%u bytes)", options[1], optlen);
+      append_field(grid, &x, &y, 8, label, NDP_OPTION_LENGTH);
 
-    if (optlen > 0) {
-      optdata = malloc(optlen*2);
+      if (optlen > 0) {
+        optdata = malloc(optlen*2);
 
-      for (i=0; i<optlen-2; ++i) sprintf(&optdata[i*2], "%02x", (unsigned int)options[i+2]);
-      optdata[(optlen-2)*2] = 0x00;
+        for (i=0; i<optlen-2; ++i) sprintf(&optdata[i*2], "%02x", (unsigned int)options[i+2]);
+        optdata[(optlen-2)*2] = 0x00;
 
-      sprintf(label, "Data: 0x%s", optdata);
-      append_field(grid, &x, &y, (optlen-2)*8, label, NDP_OPTION_DATA);
+        sprintf(label, "Data: 0x%s", optdata);
+        append_field(grid, &x, &y, (optlen-2)*8, label, NDP_OPTION_DATA);
 
-      free(optdata);
+        free(optdata);
+      }
+
+      options += optlen;
+      left -= optlen;
     }
-
-    options += optlen;
-    left -= optlen;
   }
 
   /* free memory of label */
