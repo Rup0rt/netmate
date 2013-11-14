@@ -33,7 +33,19 @@
 #define NDP_R_DEST "Destination Address\n\nThe IP address of the destination that is redirected to the target.\n\n[RFC4861]"
 #define NDP_OPTION_TYPE "Type\n\n8-bit identifier of the type of option.  The options defined in this document are:\n\t1 = Source Link-Layer Address\n\t2 = Target Link-Layer Address\n\t3 = Prefix Information\n\t4 = Redirected Header\n\t5 = MTU\n\n[RFC4861]"
 #define NDP_OPTION_LENGTH "Length\n\n8-bit unsigned integer.  The length of the option (including the type and length fields) in units of 8 octets.  The value 0 is invalid.  Nodes MUST silently discard an ND packet that contains an option with length zero.\n\n[RFC4861]"
-#define NDP_OPTION_DATA "Data\n\nVariable-length field. Option-Type-specific data.\n\n[RFC4861]"
+#define NDP_OPTION_SOURCELLA "Source Link-layer Address\n\nThe Source Link-Layer Address option contains the link-layer address of the sender of the packet.  It is used in the Neighbor Solicitation, Router Solicitation, and Router Advertisement packets.\n\n[RFC4861]"
+#define NDP_OPTION_TARGETLLA "Target Link-layer Address\n\nThe Target Link-Layer Address option contains the link-layer address of the target.  It is used in Neighbor Advertisement and Redirect packets.\n\n[RFC4861]"
+#define NDP_OPTION_PREFLEN "Prefix Length\n\nThe number of leading bits in the Prefix that are valid.  The value ranges from 0 to 128.  The prefix length field provides necessary information for on-link determination (when combined with the L flag in the prefix information option).  It also assists with address autoconfiguration, for which there may be more restrictions on the prefix length.\n\n[RFC4861]"
+#define NDP_OPTION_PREFLINK "On-Link Flag\n\nWhen set, indicates that this prefix can be used for on-link determination.  When not set the advertisement makes no statement about on-link or off-link properties of the prefix.  In other words, if the L flag is not set a host MUST NOT conclude that an address derived from the prefix is off-link.  That is, it MUST NOT update a previous indication that the address is on-link.\n\n[RFC4861]"
+#define NDP_OPTION_PREFAUTO "Autonomous Address-Configuration Flag\n\nWhen set indicates that this prefix can be used for stateless address configuration.\n\n[RFC4861]"
+#define NDP_OPTION_PREFRES "Reserved\n\nThis field is unused.  It MUST be initialized to zero by the sender and MUST be ignored by the receiver.\n\n[RFC4861]"
+#define NDP_OPTION_PREFVLT "Valid Lifetime\n\nThe length of time in seconds (relative to the time the packet is sent) that the prefix is valid for the purpose of on-link determination.  A value of all one bits (0xffffffff) represents infinity.\n\n[RFC4861]"
+#define NDP_OPTION_PREFPLT "Preferred Lifetime\n\nThe length of time in seconds (relative to the time the packet is sent) that addresses generated from the prefix via stateless address autoconfiguration remain preferred.  A value of all one bits (0xffffffff) represents infinity.\n\n[RFC4861]"
+#define NDP_OPTION_PREFIX "Prefix\n\nAn IP address or a prefix of an IP address.  The Prefix Length field contains the number of valid leading bits in the prefix.  The bits in the prefix after the prefix length are reserved and MUST be initialized to zero by the sender and ignored by the receiver.  A router SHOULD NOT send a prefix option for the link-local prefix and a host SHOULD ignore such a prefix option.\n\n[RFC4861]"
+#define NDP_OPTION_RHRES "Reserved\n\nThese fields are unused.  They MUST be initialized to zero by the sender and MUST be ignored by the receiver.\n\n[RFC4861]"
+#define NDP_OPTION_RHDATA "IP Header + Data\n\nThe original packet truncated to ensure that the size of the redirect message does not exceed the minimum MTU required to support IPv6.\n\n[RFC4861]"
+#define NDP_OPTION_MTURES "Reserved\n\nThese fields are unused.  They MUST be initialized to zero by the sender and MUST be ignored by the receiver.\n\n[RFC4861]"
+#define NDP_OPTION_MTU "MTU\n\nThe recommended MTU for the link.\n\n[RFC4861]"
 
 /* LAYER 3 */
 

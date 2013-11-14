@@ -1492,17 +1492,86 @@ GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options, int left) {
       sprintf(label, "Length: %u (%u bytes)", options[1], optlen);
       append_field(grid, &x, &y, 8, label, NDP_OPTION_LENGTH);
 
-      if (optlen > 0) {
-        optdata = malloc(optlen*2);
+      optdata = malloc(optlen*3);
 
-        for (i=0; i<optlen-2; ++i) sprintf(&optdata[i*2], "%02x", (unsigned int)options[i+2]);
-        optdata[(optlen-2)*2] = 0x00;
+      switch (opttype) {
+        case 1:
+          for (i=0; i<optlen-2; ++i) sprintf(&optdata[i*3], "%02x:", (unsigned int)options[i+2]);
+          optdata[(optlen-2)*3-1] = 0x00;
 
-        sprintf(label, "Data: 0x%s", optdata);
-        append_field(grid, &x, &y, (optlen-2)*8, label, NDP_OPTION_DATA);
+          sprintf(label, "Source Link-layer Address: %s", optdata);
+          append_field(grid, &x, &y, (optlen-2)*8, label, NDP_OPTION_SOURCELLA);
 
-        free(optdata);
+          break;
+        case 2:
+          for (i=0; i<optlen-2; ++i) sprintf(&optdata[i*3], "%02x:", (unsigned int)options[i+2]);
+          optdata[(optlen-2)*3-1] = 0x00;
+
+          sprintf(label, "Target Link-layer Address: %s", optdata);
+          append_field(grid, &x, &y, (optlen-2)*8, label, NDP_OPTION_TARGETLLA);
+
+          break;
+        case 3:
+          sprintf(label, "Prefix Length: %u", options[3]);
+          append_field(grid, &x, &y, 8, label, NDP_OPTION_PREFLEN);
+
+          /* link determination */
+          if (options[4] & 0x80) {
+            append_field(grid, &x, &y, 1, "L", NDP_OPTION_PREFLINK);
+          } else {
+            append_field(grid, &x, &y, 1, "l", NDP_OPTION_PREFLINK);
+          }
+
+          /* autonomous address-configuration */
+          if (options[4] & 0x40) {
+            append_field(grid, &x, &y, 1, "A", NDP_OPTION_PREFAUTO);
+          } else {
+            append_field(grid, &x, &y, 1, "a", NDP_OPTION_PREFAUTO);
+          }
+
+          sprintf(label, "Reserved: 0x%02x", options[4] & 0x3F);
+          append_field(grid, &x, &y, 6, label, NDP_OPTION_PREFRES);
+
+          memcpy(&ifield, options+4, 4);
+          sprintf(label, "Valid Lifetime: 0x%08x (%u)", htonl(ifield), htonl(ifield));
+          append_field(grid, &x, &y, 32, label, NDP_OPTION_PREFVLT);
+
+          memcpy(&ifield, options+8, 4);
+          sprintf(label, "Preferred Lifetime: 0x%08x (%u)", htonl(ifield), htonl(ifield));
+          append_field(grid, &x, &y, 32, label, NDP_OPTION_PREFPLT);
+
+          memcpy(&ifield, options+12, 4);
+          sprintf(label, "Reserved: 0x%08x", htonl(ifield));
+          append_field(grid, &x, &y, 32, label, NDP_OPTION_PREFRES);
+
+          sprintf(label, "Prefix: %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x", options[16], options[17], options[18], options[19], options[20], options[21], options[22], options[23], options[24], options[25], options[26], options[27], options[28], options[29], options[30], options[31]);
+          append_field(grid, &x, &y, 128, label, NDP_OPTION_PREFIX);
+
+          break;
+        case 4:
+          sprintf(label, "Reserved: 0x%02x%02x%02x%02x%02x%02x", options[2], options[3], options[4], options[5], options[6], options[7]);
+          append_field(grid, &x, &y, 48, label, NDP_OPTION_RHRES);
+
+          for (i=0; i<optlen-8; ++i) sprintf(&optdata[i*2], "%02x", (unsigned int)options[i+8]);
+          optdata[(optlen-8)*2] = 0x00;
+
+          sprintf(label, "IP Header + Data: 0x%s", optdata);
+          append_field(grid, &x, &y, optlen*8, label, NDP_OPTION_RHDATA);
+
+          break;
+        case 5:
+          memcpy(&sfield, options+2, 2);
+          sprintf(label, "Reserved: 0x%04x", htons(sfield));
+          append_field(grid, &x, &y, 16, label, NDP_OPTION_MTURES);
+
+          memcpy(&ifield, options+4, 4);
+          sprintf(label, "MTU: %u", htonl(ifield));
+          append_field(grid, &x, &y, 32, label, NDP_OPTION_MTU);
+
+          break;
       }
+
+      free(optdata);
 
       options += optlen;
       left -= optlen;
