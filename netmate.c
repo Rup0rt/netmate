@@ -1,3 +1,22 @@
+/*******************************************************************************
+ *
+ * Copyright (c) 2013 Robert Krause (ruport@f00l.de)
+ *
+ * This file is part of Netmate.
+ *
+ * Netmate is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or any later version.
+ *
+ * Netmate is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * Netmate. If not, see http://www.gnu.org/licenses/.
+ *
+ ******************************************************************************/
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -26,7 +45,7 @@
 /* ADDITIONAL LINK TYPES */
 #define LINKTYPE_LINUX_SLL 113
 
-/**************************************************************************************************/
+/******************************************************************************/
 
 void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore);
 void append_field(GtkGrid *grid, int *x, int *y, int size, char *label, char *tooltip);
@@ -39,16 +58,16 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **flag
 #include "layer3.h"
 #include "layer4.h"
 
-/**************************************************************************************************/
+/******************************************************************************/
 
 char *filename = NULL;
 
 /* global grids (protocol container) */
 GtkNotebook *protocolheadernotebook;
 
-/**************************************************************************************************/
+/******************************************************************************/
 /* GTK INFORMATION WINDOWS */
-/**************************************************************************************************/
+/******************************************************************************/
 
 /* shows an error popup with given (char*) as message */
 void show_error(GtkWidget *widget, gpointer message) {
@@ -153,7 +172,7 @@ gint show_question(GtkWidget *widget, gpointer message) {
   return(ret);
 }
 
-/**************************************************************************************************/
+/******************************************************************************/
 
 void append_field(GtkGrid *grid, int *x, int *y, int size, char *label, char *tooltip) {
   GtkButton *button;
@@ -609,7 +628,7 @@ void loadpcapfile(GtkWidget *widget, GtkListStore *packetliststore) {
 
   /* check for proper pcap file */
   if (handler == NULL ) {
-    show_error(widget, "Invalid pcap format, try pcapfix :P");
+    show_error(widget, "Invalid pcap format, try pcapfix :)");
     filename = NULL;
     return;
   }

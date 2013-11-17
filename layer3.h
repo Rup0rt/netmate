@@ -1,6 +1,25 @@
-/**************************************************************************************************/
+/*******************************************************************************
+ *
+ * Copyright (c) 2013 Robert Krause (ruport@f00l.de)
+ *
+ * This file is part of Netmate.
+ *
+ * Netmate is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or any later version.
+ *
+ * Netmate is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * Netmate. If not, see http://www.gnu.org/licenses/.
+ *
+ ******************************************************************************/
+
+/******************************************************************************/
 /* netmate layer3 protocols */
-/**************************************************************************************************/
+/******************************************************************************/
 
 char *ipprotocol(unsigned char id);
 char *ipv4_optclass(unsigned char id);
@@ -19,7 +38,7 @@ GtkGrid *arp_grid(struct arphdr *arp, u_char *options);					/* arp (type 0x0806)
 GtkGrid *icmp_grid(struct icmphdr *icmp, u_char *options, int left);	/* icmp */
 GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options, int left);		/* icmp */
 
-/**************************************************************************************************/
+/******************************************************************************/
 
 /* taken from http://en.wikipedia.org/wiki/List_of_IP_protocol_numbers */
 char *ipprotocol(unsigned char id) {

@@ -1,13 +1,32 @@
-/**************************************************************************************************/
+/*******************************************************************************
+ *
+ * Copyright (c) 2013 Robert Krause (ruport@f00l.de)
+ *
+ * This file is part of Netmate.
+ *
+ * Netmate is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or any later version.
+ *
+ * Netmate is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * Netmate. If not, see http://www.gnu.org/licenses/.
+ *
+ ******************************************************************************/
+
+/******************************************************************************/
 /* netmate layer2 protocols */
-/**************************************************************************************************/
+/******************************************************************************/
 
 char *hardwaretype(unsigned short id);
 char *ethertype(unsigned short id);
 GtkGrid *ethernet_grid(struct ether_header *eth);	/* ethernet */
 GtkGrid *sll_grid(struct sll_header *sll);			/* ssl (linux cooked) */
 
-/**************************************************************************************************/
+/******************************************************************************/
 
 /* taken from http://www.tcpdump.org/linktypes.html */
 char *hardwaretype(unsigned short id) {
