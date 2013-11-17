@@ -723,7 +723,7 @@ int main (int argc, char *argv[]) {
 
   aboutmenuitem = GTK_MENU_ITEM(gtk_menu_item_new_with_label("About"));
 
-  g_signal_connect(aboutmenuitem, "activate", G_CALLBACK(show_information), "NetMate (c) 2013 Robert Krause\n\nPlease report any bugs and feature requests to robert@f00l.de\n\nFor more information visit http://f00l.de/netmate/");
+  g_signal_connect(aboutmenuitem, "activate", G_CALLBACK(show_information), "Copyright (c) 2013 Robert Krause (ruport@f00l.de)\n\nNetmate is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.\n\nNetmate is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nPlease report any bugs and feature requests to ruport@f00l.de\n\nFor more information visit http://f00l.de/netmate/");
 
   gtk_container_add(GTK_CONTAINER(helpmenu), GTK_WIDGET(aboutmenuitem));
 
