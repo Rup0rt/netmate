@@ -15,7 +15,7 @@ GTK_LIBS = $(shell pkg-config --libs gtk+-3.0)
 
 all: netmate.c layer2.h layer3.h layer4.h
 	gcc $(CPPFLAGS) $(GTK_CFLAGS) $(CFLAGS) -c netmate.c -o netmate.o
-	gcc $(GTK_LIBS) -lpcap $(LDFLAGS) netmate.o -o netmate
+	gcc $(LDFLAGS) netmate.o $(GTK_LIBS) -lpcap -o netmate
 
 install:
 	install -D -m 755 netmate $(DESTDIR)/$(BINDIR)/netmate
