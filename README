@@ -1,4 +1,4 @@
-netmate v0.2.0 README
+netmate v0.2.1 README
 *********************
 
 Netmate is a GTK+ program that shows network protocols headers in 32-bit
@@ -31,7 +31,7 @@ USAGE
 COPYRIGHT
 =========
 
-Copyright 2013 Robert Krause
+Copyright 2013-2016 Robert Krause
 
 Netmate is free software: you can redistribute it and/or modify it under the
 terms of the GNU General Public License as published by the Free Software
