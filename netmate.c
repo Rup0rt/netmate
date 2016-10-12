@@ -40,7 +40,7 @@
 #endif
 
 /* THE VERSION OF NETMATE */
-#define VERSION "0.2.0"
+#define VERSION "0.2.1"
 
 /* ADDITIONAL LINK TYPES */
 #define LINKTYPE_LINUX_SLL 113
@@ -403,8 +403,8 @@ void openpcapfile(GtkWidget *widget, gpointer data) {
   fileopendialog = GTK_DIALOG(gtk_file_chooser_dialog_new ("Open File",
      				      GTK_WINDOW(gtk_widget_get_toplevel(widget)),
      				      GTK_FILE_CHOOSER_ACTION_OPEN,
-     				      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-     				      GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+     				      "_Cancel", GTK_RESPONSE_CANCEL,
+     				      "_Open", GTK_RESPONSE_ACCEPT,
      				      NULL));
   gtk_window_resize(GTK_WINDOW(fileopendialog), 1000, 500);
 
@@ -694,12 +694,12 @@ int main (int argc, char *argv[]) {
   gtk_container_add(GTK_CONTAINER(mainwindow), GTK_WIDGET(mainbox));
 
   topmenubar = GTK_MENU_BAR(gtk_menu_bar_new());
-  filemenuitem = GTK_MENU_ITEM(gtk_menu_item_new_with_label("File"));
+  filemenuitem = (GtkMenuItem*)gtk_menu_item_new_with_label("File");
 
   filemenu = GTK_MENU(gtk_menu_new());
 
   /* init open file menu */
-  openimagemenuitem = GTK_IMAGE_MENU_ITEM(gtk_image_menu_item_new_from_stock("gtk-open", NULL));
+  openimagemenuitem = (GtkImageMenuItem*)gtk_menu_item_new_with_label("Open");
   g_signal_connect(openimagemenuitem, "activate", G_CALLBACK(openpcapfile), packetliststore);
 
   gtk_container_add(GTK_CONTAINER(filemenu), GTK_WIDGET(openimagemenuitem));
@@ -707,7 +707,7 @@ int main (int argc, char *argv[]) {
   gtk_container_add(GTK_CONTAINER(filemenu), gtk_separator_menu_item_new());
 
   /* init quit menu */
-  quitimagemenuitem = GTK_IMAGE_MENU_ITEM(gtk_image_menu_item_new_from_stock("gtk-quit", NULL));
+  quitimagemenuitem = (GtkImageMenuItem*)gtk_menu_item_new_with_label("Quit");
   g_signal_connect(quitimagemenuitem, "activate", G_CALLBACK(gtk_main_quit), NULL);
 
   gtk_container_add(GTK_CONTAINER(filemenu), GTK_WIDGET(quitimagemenuitem));
@@ -723,7 +723,7 @@ int main (int argc, char *argv[]) {
 
   aboutmenuitem = GTK_MENU_ITEM(gtk_menu_item_new_with_label("About"));
 
-  g_signal_connect(aboutmenuitem, "activate", G_CALLBACK(show_information), "Copyright (c) 2013 Robert Krause (ruport@f00l.de)\n\nNetmate is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.\n\nNetmate is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nPlease report any bugs and feature requests to ruport@f00l.de\n\nFor more information visit http://f00l.de/netmate/");
+  g_signal_connect(aboutmenuitem, "activate", G_CALLBACK(show_information), "Copyright (c) 2013-2016 Robert Krause (ruport@f00l.de)\n\nNetmate is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.\n\nNetmate is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nPlease report any bugs and feature requests to ruport@f00l.de\n\nFor more information visit http://f00l.de/netmate/");
 
   gtk_container_add(GTK_CONTAINER(helpmenu), GTK_WIDGET(aboutmenuitem));
 
