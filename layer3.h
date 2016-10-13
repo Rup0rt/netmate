@@ -35,8 +35,8 @@ char *icmpv6_opttype(unsigned char id);
 GtkGrid *ipv4_grid(struct iphdr *ipv4, u_char *options);				/* ipv4 (type 0x0800) */
 GtkGrid *ipv6_grid(struct ip6_hdr *ipv6, u_char *options);				/* ipv6 (type 0x08dd) */
 GtkGrid *arp_grid(struct arphdr *arp, u_char *options);					/* arp (type 0x0806) */
-GtkGrid *icmp_grid(struct icmphdr *icmp, u_char *options, int left);	/* icmp */
-GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options, int left);		/* icmp */
+GtkGrid *icmp_grid(struct icmphdr *icmp, int left);					/* icmp */
+GtkGrid *icmpv6_grid(struct icmp6_hdr *icmpv6, u_char *options, int left);		/* icmp v6 */
 
 /******************************************************************************/
 
@@ -1186,13 +1186,10 @@ GtkGrid *arp_grid(struct arphdr *arp, u_char *options) {
   return(grid);
 }
 
-GtkGrid *icmp_grid(struct icmphdr *icmp, u_char *options, int left) {
+GtkGrid *icmp_grid(struct icmphdr *icmp, int left) {
   GtkGrid *grid;	/* the grid itself */
   char *label;		/* label of buttons to set */
   int x,y;			/* position pointer to next empty grid cell */
-  int i;
-  int optlen;
-  char *optdata;
 
   /* init new empty grid */
   grid = GTK_GRID(gtk_grid_new());
@@ -1302,27 +1299,11 @@ GtkGrid *icmp_grid(struct icmphdr *icmp, u_char *options, int left) {
       break;
   }
 
-  /* allocate memory for option data */
-  optdata = malloc(10);
+  /* only show left data in bytes because it blows the window too much when much data */
 
-  /* progress bytes until no option bytes left */
-  while (left > 0) {
-    if (left >= 4) optlen = 4; else optlen = left;
-
-    /* print bytes in hex format into array */
-    for (i=0; i<optlen; ++i) sprintf(&optdata[i*2], "%02x", (unsigned int)options[i]);
-    optdata[optlen*2] = 0x00;
-
-    /* option data field */
-    sprintf(label, "Data 0x%s", optdata);
-    append_field(grid, &x, &y, optlen*8, label, ICMP_DATA);
-
-    options += optlen;
-    left -= optlen;
-  }
-
-  /* free data */
-  free(optdata);
+  /* additional data field */
+  sprintf(label, "Additional Data: %d bytes", left);
+  append_field(grid, &x, &y, 32, label, ICMP_DATA);
 
   /* free memory of label */
   free(label);

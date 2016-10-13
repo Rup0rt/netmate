@@ -352,7 +352,7 @@ void display_packet(GtkWidget *widget) {
         icmp = (struct icmphdr*)nextptr;
         nextptr += sizeof(struct icmphdr);
 
-        gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(icmp_grid(icmp, ((u_char*)nextptr), htons(ipv4->tot_len)-(ipv4->ihl*4))), gtk_label_new(ipprotocol(nextproto)));
+        gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(icmp_grid(icmp, htons(ipv4->tot_len)-(ipv4->ihl*4))), gtk_label_new(ipprotocol(nextproto)));
 
         break;
       case IPPROTO_ICMPV6:
