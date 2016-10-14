@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * Copyright (c) 2013 Robert Krause (ruport@f00l.de)
+ * Copyright (c) 2013-2016 Robert Krause (ruport@f00l.de)
  *
  * This file is part of Netmate.
  *
@@ -1302,7 +1302,7 @@ GtkGrid *icmp_grid(struct icmphdr *icmp, int left) {
   /* only show left data in bytes because it blows the window too much when much data */
 
   /* additional data field */
-  sprintf(label, "Additional Data: %d bytes", left);
+  sprintf(label, "( Additional data: %d bytes )", left);
   append_field(grid, &x, &y, 32, label, ICMP_DATA);
 
   /* free memory of label */

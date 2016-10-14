@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * Copyright (c) 2013 Robert Krause (ruport@f00l.de)
+ * Copyright (c) 2013-2016 Robert Krause (ruport@f00l.de)
  *
  * This file is part of Netmate.
  *
@@ -24,7 +24,7 @@
 char *hardwaretype(unsigned short id);
 char *ethertype(unsigned short id);
 GtkGrid *ethernet_grid(struct ether_header *eth);	/* ethernet */
-GtkGrid *sll_grid(struct sll_header *sll);			/* ssl (linux cooked) */
+GtkGrid *sll_grid(struct sll_header *sll);		/* ssl (linux cooked) */
 
 /******************************************************************************/
 
