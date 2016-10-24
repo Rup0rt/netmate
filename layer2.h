@@ -28,6 +28,40 @@ GtkGrid *sll_grid(struct sll_header *sll);		/* ssl (linux cooked) */
 
 /******************************************************************************/
 
+#define NULL_IPV4 2
+#define NULL_IPV6_24 24
+#define NULL_IPV6_28 28
+#define NULL_IPV6_30 30
+
+/*
+   BSD loopback encapsulation; the link layer header is a 4-byte field, in
+   host byte order, containing a value of 2 for IPv4 packets, a value of
+   either 24, 28, or 30 for IPv6 packets, a value of 7 for OSI packets, or a
+   value of 23 for IPX packets. All of the IPv6 values correspond to IPv6
+   packets; code reading files should check for all of them.
+*/
+struct null_header {
+  u_int32_t link_layer;      /* link layer */
+};
+
+/* taken from http://www.tcpdump.org/linktypes.html */
+char *nulltype(unsigned int id) {
+  switch (id) {
+    case 2:
+      return("IPV4");
+    case 7:
+      return("OSI");
+    case 23:
+      return("IPX");
+    case 24:
+    case 28:
+    case 30:
+      return("IPV6");
+  }
+  return("UNKNOWN");
+}
+
+
 /* taken from http://www.tcpdump.org/linktypes.html */
 char *hardwaretype(unsigned short id) {
   switch (id) {
@@ -383,6 +417,44 @@ GtkGrid *ethernet_grid(struct ether_header *eth) {
   /* upper layer protocol */
   sprintf(label, "Type: 0x%04x (%s)", htons(eth->ether_type), ethertype(htons(eth->ether_type)));
   append_field(grid, &x, &y, sizeof(eth->ether_type)*8, label, ETHERNET_TYPE);
+
+  /* free memory of label */
+  free(label);
+
+  /* show ethernet grid (tab) */
+  gtk_widget_show_all(GTK_WIDGET(grid));
+
+  /* return grid to tab builder */
+  return(grid);
+}
+
+GtkGrid *null_grid(struct null_header *null) {
+  GtkGrid *grid;	/* the grid itself */
+  int x, y;		/* position pointer to next empty grid cell */
+  char *label;		/* label of buttons to set */
+
+  /* init new empty grid */
+  grid = GTK_GRID(gtk_grid_new());
+
+  /* set columns to be uniform sized (for better bit size representation) */
+  gtk_grid_set_column_homogeneous(grid, TRUE);
+
+  /* allocate memory for button label */
+  label = malloc(100);
+
+  /* build bit indication topic line (0 1 2 .. 31) */
+  for (x=0; x<32; x++) {
+    sprintf(label, "%u", x);
+    gtk_grid_attach(grid, gtk_label_new(label), x, 0, 1, 1);
+  }
+
+  /* set cell pointer to next empty grid cell */
+  x=0;
+  y=1;
+
+  /* link layer header */
+  sprintf(label, "Link layer: %u (%s)", null->link_layer, nulltype(null->link_layer));
+  append_field(grid, &x, &y, sizeof(null->link_layer)*8, label, NULL_LINK_LAYER);
 
   /* free memory of label */
   free(label);

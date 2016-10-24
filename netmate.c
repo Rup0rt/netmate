@@ -228,6 +228,7 @@ void display_packet(GtkWidget *widget) {
   struct pcap_pkthdr *header;		/* the header from libpcap */
   const u_char *packet;			/* current packet pointer */
   unsigned int packetnumber;		/* currently secected packet number */
+  struct null_header *null = NULL;
   struct ether_header *eth = NULL;
   struct sll_header *sll = NULL;	/* sll header (linux cooked) */
   struct arphdr *arp = NULL;
@@ -268,6 +269,32 @@ void display_packet(GtkWidget *widget) {
 
   switch (pcap_datalink(handler)) {
 
+    case DLT_NULL:
+      /* set pointer to null header */
+      null = (struct null_header*)(packet);
+
+      /* display null tab */
+      gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(null_grid(null)), gtk_label_new(hardwaretype(pcap_datalink(handler))));
+
+      nextproto = null->link_layer;
+      switch (nextproto) {
+        case NULL_IPV4:
+          nextproto = ETHERTYPE_IP;
+          nextptr = (void*)(packet + sizeof(struct null_header));
+          break;
+        case NULL_IPV6_24:
+        case NULL_IPV6_28:
+        case NULL_IPV6_30:
+          nextproto = ETHERTYPE_IPV6;
+          nextptr = (void*)(packet + sizeof(struct null_header));
+          break;
+        default:
+          /* display not supported tab */
+          gtk_notebook_append_page(protocolheadernotebook, GTK_WIDGET(not_supported_grid(nulltype(null->link_layer))), gtk_label_new(nulltype(null->link_layer)));
+          break;
+      }
+
+      break;
     case DLT_EN10MB:
       /* set pointer to ethernet header */
       eth = (struct ether_header*)(packet);
@@ -418,6 +445,7 @@ void openpcapfile(GtkWidget *widget, gpointer data) {
 }
 
 void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **flags, char **source, char **sport, char **destination, char **dport) {
+  struct null_header *null;
   struct ether_header *eth;
   struct iphdr *ipv4;                   /* ipv4_header pointer */
   struct tcphdr *tcp;
@@ -443,7 +471,28 @@ void getinfo(pcap_t *handler, const u_char *packet, char **protocol, char **flag
   sprintf(*protocol, "%s", hardwaretype(pcap_datalink(handler)));
 
   switch (pcap_datalink(handler)) {
+    case DLT_NULL:
+      /* set pointer to null header */
+      null = (struct null_header*)(packet);
 
+      nextproto = null->link_layer;
+      switch (nextproto) {
+        case NULL_IPV4:
+          nextproto = ETHERTYPE_IP;
+          nextptr = (void*)(packet + sizeof(struct null_header));
+          break;
+        case NULL_IPV6_24:
+        case NULL_IPV6_28:
+        case NULL_IPV6_30:
+          nextproto = ETHERTYPE_IPV6;
+          nextptr = (void*)(packet + sizeof(struct null_header));
+          break;
+        default:
+          nextproto = 0xffff;
+          break;
+      }
+
+      break;
     case DLT_EN10MB:
       /* set pointer to ethernet header */
       eth = (struct ether_header*)(packet);

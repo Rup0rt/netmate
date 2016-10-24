@@ -19,6 +19,9 @@
 
 /* LAYER 2 */
 
+/* BSD LOOPBACK ENCAPSULATION (NULL) */
+#define NULL_LINK_LAYER "the link layer header is a 4-byte field, in host byte order, containing a value of 2 for IPv4 packets, a value of either 24, 28, or 30 for IPv6 packets, a value of 7 for OSI packets, or a value of 23 for IPX packets. All of the IPv6 values correspond to IPv6 packets; code reading files should check for all of them.\n\n[www.tcpdump.org]"
+
 /* ETHERNET */
 #define ETHERNET_DESTINATION "Destination MAC Address\n\nEthernet and IEEE 802.3 addresses are 6 bytes long. Addresses are contained in hardware on the Ethernet and IEEE 802.3 interface cards. The first 3 bytes of the addresses are specified by the IEEE on a vendor-dependent basis, while the last 3 bytes are specified by the Ethernet or IEEE 802.3 vendor. The source address is always a unicast (single node) address, while the destination address may be unicast, multicast (group), or broadcast (all nodes).\n\n[IEEE802.3]"
 #define ETHERNET_SOURCE "Source MAC Address\n\nEthernet and IEEE 802.3 addresses are 6 bytes long. Addresses are contained in hardware on the Ethernet and IEEE 802.3 interface cards. The first 3 bytes of the addresses are specified by the IEEE on a vendor-dependent basis, while the last 3 bytes are specified by the Ethernet or IEEE 802.3 vendor. The source address is always a unicast (single node) address, while the destination address may be unicast, multicast (group), or broadcast (all nodes).\n\n[IEEE802.3]"
