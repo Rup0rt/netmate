@@ -1,5 +1,6 @@
-2015-10-13 Robert Krause <Ruport@web.de>
+2015-10-31 Robert Krause <Ruport@web.de>
 
+ * added BSD local loopback as DLT type
  * removed separate ICMP data fields with one single field
  * updated code to match GTK 3.10 requirements
 
