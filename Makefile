@@ -10,12 +10,13 @@ WARNFLAGS = -Wall -Wextra -Wformat -Werror=format-security
 DEBUGFLAGS = -g
 CFLAGS += $(OPTFLAGS) $(WARNFLAGS) $(DEBUGFLAGS)
 LDFLAGS += -Wl,-z,relro
-GTK_CFLAGS = $(shell pkg-config --cflags gtk+-3.0)
-GTK_LIBS = $(shell pkg-config --libs gtk+-3.0)
+PKG_CONFIG ?= pkg-config
+GTK_CFLAGS = $(shell $(PKG_CONFIG) --cflags gtk+-3.0)
+GTK_LIBS = $(shell $(PKG_CONFIG) --libs gtk+-3.0)
 
 all: netmate.c layer2.h layer3.h layer4.h
-	gcc $(CPPFLAGS) $(GTK_CFLAGS) $(CFLAGS) -c netmate.c -o netmate.o
-	gcc $(GTK_LIBS) -lpcap $(LDFLAGS) netmate.o -o netmate
+	$(CC) $(CPPFLAGS) $(GTK_CFLAGS) $(CFLAGS) -c netmate.c -o netmate.o
+	$(CC) $(LDFLAGS) netmate.o $(GTK_LIBS)  -lpcap -o netmate
 
 install:
 	install -D -m 755 netmate $(DESTDIR)/$(BINDIR)/netmate
